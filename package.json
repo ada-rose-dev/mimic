@@ -1,0 +1,22 @@
+{
+  "name": "verifier-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "phoenix ada rose mandala",
+  "license": "MIT",
+  "bin": {
+    "verifyjs": "index.js"
+  },
+  "module": "r20",
+  "dependencies": {
+    "jquery": "^3.5.1",
+    "jsdom": "^16.4.0",
+    "r20": "file:r20",
+    "underscore": "^1.11.0"
+  }
+}
