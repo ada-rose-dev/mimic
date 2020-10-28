@@ -21,6 +21,7 @@ const node_exe = process.argv.shift();
 const thisdir = process.argv.shift();
 const dir = process.argv.shift();
 const attrs = {};
+const mancerattrs = {};
 
 //-- boot
 if (!dir) {
@@ -110,7 +111,6 @@ function runScripts(scripts) {
         for (i in scripts) {
             vm.runInContext(scripts[i],contextobj,i);
         }
-        Object.keys(attrs).forEach(k=>delete attrs[k]);
     }
     catch (e) {
         log("ERROR:",e);
@@ -165,4 +165,9 @@ function definePostMessage(contextobj) {
 
 function setDefaultAttrs() {
     attrs["character_name"] = "Character Name";
+    mancerattrs["current_page"] = "";
+}
+function resetAttrs() {
+    Object.keys(attrs).forEach(k=>delete attrs[k]);
+    Object.keys(mancerattrs).forEach(k=>delete mancerattrs[k]);
 }
