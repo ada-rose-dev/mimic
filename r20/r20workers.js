@@ -679,9 +679,9 @@ exports.init = function (self, globalEval, globalUnderscore) {
 	console.log("Starting up WEB WORKER");
 
 	var postMessage   = self.postMessage,
-	messageEventType  = "message",
+	messageEventType  = "message";
 
-	messageHandler = function (event) {
+	self.messageHandler = function (event) {
 		var request = event.data,
 		response = {
 		};
@@ -739,26 +739,11 @@ exports.init = function (self, globalEval, globalUnderscore) {
 	};
 
 	if (self.addEventListener) {
-		self.addEventListener(messageEventType, messageHandler, false);
+		self.addEventListener(messageEventType, self.messageHandler, false);
 	} else if (self.attachEvent) { // for future compatibility with IE
 		self.attachEvent("on" + messageEventType, messageHandler);
 	}
 
 	self.window = self; // provide a window object for scripts
-
-	// dereference unsafe functions
-	self.Worker              =
-	self.addEventListener    =
-	self.removeEventListener =
-	self.importScripts       =
-	self.XMLHttpRequest      =
-	//self.postMessage         =
-	//self.dispatchEvent       =
-	// in case IE implements web workers
-	self.attachEvent         =
-	self.detachEvent         =
-	self.ActiveXObject       =
-
-	undefined;
 
 }; //(self,eval,_)

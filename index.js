@@ -66,7 +66,7 @@ function mainLoop(directory,filenames,watch) {
 
 }
 function loadFiles(directory, filenames) {
-    const scripts = [];
+    const scripts = {};
     if (filenames.length == 0) {
         try {
             filenames = fs.readdirSync(dir);
@@ -81,7 +81,7 @@ function loadFiles(directory, filenames) {
     for (i in filenames) {
         try {
             if (filenames[i].search(".js") > 0) {
-                scripts[i] = fs.readFileSync(directory + "/" + filenames[i]);
+                scripts[filenames[i]] = fs.readFileSync(directory + "/" + filenames[i]);
             }
         }
         catch (e) {
@@ -96,29 +96,21 @@ function loadFiles(directory, filenames) {
 }
 function runScripts(scripts) {
     try {
-        //initalize contextobj
         const contextobj = {
             _:_,
             console:console
         };
         vm.createContext(contextobj);
-
-        //add extra functions
         Object.assign(contextobj,dom);
         Object.assign(contextobj,r20.api.api);
-        contextobj.postMessage = postMessage;
+        contextobj.postMessage = definePostMessage(contextobj);
         vm.runInContext(r20.workers.init(contextobj,eval,_),contextobj);
-        
-        //clear out attribute cache
-        Object.keys(attrs).forEach(k=>delete attrs[k]);
 
-        //run sheet scripts
+        setDefaultAttrs();
         for (i in scripts) {
-            vm.runInContext(scripts[i],contextobj);
+            vm.runInContext(scripts[i],contextobj,i);
         }
-
-        //yay
-        log("\x1b[32mSuccessful compilation! :)");
+        Object.keys(attrs).forEach(k=>delete attrs[k]);
     }
     catch (e) {
         log("ERROR:",e);
@@ -134,23 +126,43 @@ function log(...params) {
     }
     console.log(...params);
 }
-function postMessage(message) {
-    // TODO:
-    // fill out this switch
-    // return appropriate values to messageHandler
-    // several front-end events can just be ignored (e.g. setCharmancerText)
 
-    returned = {};
-    switch(message.type) {
-        case("attrlist"):
-        break;
-        case("setattrs"):
-        break;
-        case("attrreq"):
-            for (i in message.data) {
-                returned[i] = attrs[message.data[i]];
+function definePostMessage(contextobj) {
+    return function postMessage(message) {
+        // TODO:
+        // fill out this switch
+        // return appropriate values to messageHandler
+        // several front-end events can just be ignored (e.g. setCharmancerText)
+
+        typeMap = {
+            "": "eval",
+            "":"trigger",
+            "attrreq":"attrreqfulfilled",
+            "attrlist":"attrlistreqfulfilled",
+            "setattrs":"setattrreqfulfilled",
+            "":"setActiveCharacter",
+            "":"loadTranslationStrings",
+            "":"getCompendiumPage",
+            "":"setCharmancerData"
+        }
+
+        returned = {data: {id: message.id, type: typeMap[message.type]}};
+        switch(message.type) {
+            case("setattrs"):
+            case("attrreq"):
+            case("attrlist"):
+            returned.data.data = {};
+            if (Array.isArray(message.data)) {
+                for (i in message.data) {
+                    returned.data.data[message.data[i]] = attrs[message.data[i]];
+                }
             }
-        break;
+            break;
+        }
+        contextobj.messageHandler(returned);
     }
-    messageHandler(returned);
+}
+
+function setDefaultAttrs() {
+    attrs["character_name"] = "Character Name";
 }
