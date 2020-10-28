@@ -6,7 +6,7 @@ verifyjs is a simple Node.JS-based command-line program to verify javascript on 
 0. Open your terminal to the installation directory
 0. Run the following command: `npm install . -g`
 0. Navigate to your javascript folder
-0. Run `verifyjs %YOUR_DIRECTORY%`
+0. Run `verifyjs ./`
 
 You can watch for changes by using the `--watch` command.
 
