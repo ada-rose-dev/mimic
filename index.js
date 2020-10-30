@@ -10,29 +10,51 @@ const process = require('process');
 const vm = require('vm');
 const r20 = require('r20');
 const _ = require('underscore');
-const {parentPort, MessageChannel, Worker, isMainThread, workerData} = require('worker_threads');
-const {port1,port2} = new MessageChannel();
+const scraper = require('scraper');
+
 const jsdom = require('jsdom');
+const { dir } = require('console');
+const { exit } = require('process');
+const { isString } = require('r20/r20base');
+const { captureRejectionSymbol } = require('events');
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 const {JSDOM} = jsdom;
 const dom = new JSDOM(``, {virtualConsole});
+
 const node_exe = process.argv.shift();
 const thisdir = process.argv.shift();
-const dir = process.argv.shift();
+
 const attrs = {};
-const mancerattrs = {};
 
 //-- boot
-if (!dir) {
-    log("No directory provided.");
-    process.exit(1);
-}
-var watch = false;
+var target_dir;
+var watch;
+var scrape;
+const comp = [];
+const mancer = {
+    current_page: "",
+    data: {}
+};
 var filenames = [];
-for (i in process.argv) {
+for (var i = 0; i < process.argv.length; ++i) {
     if (process.argv[i] == "--watch") {
         watch = true;
+    }
+    else if (process.argv[i].search("--comp") !== -1) {
+        var name = process.argv[i].substr(process.argv[i].search('=')).replace(/\=|\"|\'/gi,"").replace(" ","%20");
+        loadCompendium(name,comp);
+    }
+    else if (process.argv[i] == "--scrape") {
+        scrape = true;
+        (async function () {
+            await scraper.scrape(process.argv[++i],process.argv[++i],process.argv[++i]);
+            log("Scrape finished.");
+            process.exit(1);
+        })();
+    }
+    else if (!target_dir) {
+        target_dir = process.argv[i];
     }
     else {
         if (process.argv[i].search(".js") === 0) {
@@ -43,8 +65,16 @@ for (i in process.argv) {
         }
     }
 }
-
-mainLoop(dir,filenames,watch);
+if (scrape) {
+    //do nothing
+}
+else if (!target_dir) {
+    log("No directory provided.");
+    process.exit(1);
+}
+else {
+    mainLoop(target_dir,filenames,watch);
+}
 
 
 //-- Main loop
@@ -70,11 +100,11 @@ function loadFiles(directory, filenames) {
     const scripts = {};
     if (filenames.length == 0) {
         try {
-            filenames = fs.readdirSync(dir);
+            filenames = fs.readdirSync(target_dir);
             log("Scraped filenames",filenames);
         }
         catch(e) {
-            log("ERROR: Directory not found: ",dir);
+            log("ERROR: Directory not found: ",target_dir);
             log(e);
             process.exit(1);
         }
@@ -111,6 +141,7 @@ function runScripts(scripts) {
         for (i in scripts) {
             vm.runInContext(scripts[i],contextobj,i);
         }
+        resetAttrs();
     }
     catch (e) {
         log("ERROR:",e);
@@ -135,19 +166,79 @@ function definePostMessage(contextobj) {
         // several front-end events can just be ignored (e.g. setCharmancerText)
 
         typeMap = {
-            "": "eval",
-            "":"trigger",
+            "eval": "eval",
+            "trigger":"trigger",
             "attrreq":"attrreqfulfilled",
             "attrlist":"attrlistreqfulfilled",
             "setattrs":"setattrreqfulfilled",
+            "getcompendiumpage":"attrreqfulfilled",
+            "getcompendiumquery":"attrreqfulfilled",
             "":"setActiveCharacter",
             "":"loadTranslationStrings",
-            "":"getCompendiumPage",
             "":"setCharmancerData"
         }
 
         returned = {data: {id: message.id, type: typeMap[message.type]}};
         switch(message.type) {
+
+            case("getcompendiumpage"):
+            if (comp) {
+                var arr = message.data;
+                if (typeof(message.data) == "string") {
+                    arr = [];
+                    arr.push(message.data);
+                }
+                returned.data.data = {};
+                for (i in arr) {
+                    Object.assign(returned.data.data,(comp[message.data].data));
+                    mancer.current_page = comp[message.data].data;
+                }
+            }
+            else
+                console.warn("Trying to get compendium page when no compendium has been set.");
+            break;
+            case("getcompendiumquery"):
+            if (comp) {
+                var data = message.data[0],
+                    query = {},
+                    matched_pages = [];
+
+                if (typeof(data) === "string") {
+                    data = data.split(" ");
+                }
+                for (i in data) {
+                    var obj = data[i].split(":");
+                    query[obj[0]] = new RegExp(obj[1],"i");    
+                }
+                try {
+                    for (i in comp) {
+                        var page = comp[i];
+                        matched = false;
+                        for (qkey in query) {
+                            for (dkey in page.data) {
+                                var val = page.data[dkey];
+                                var regex = query[qkey];
+                                if (dkey == qkey && val.match(regex)) {
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (matched) {
+                            matched_pages.push(page.data);
+                        }
+                    }
+                }
+                catch (e) {
+                    console.warn("unable to fetch compendium query: ",query);
+                    console.warn(e);
+                }
+
+                returned.data.data = matched_pages;
+            }
+            else
+                console.warn("Trying to get compendium page when no compendium has been set.");
+            break;
             case("setattrs"):
             case("attrreq"):
             case("attrlist"):
@@ -165,9 +256,30 @@ function definePostMessage(contextobj) {
 
 function setDefaultAttrs() {
     attrs["character_name"] = "Character Name";
-    mancerattrs["current_page"] = "";
+    mancer.data = {};
 }
 function resetAttrs() {
     Object.keys(attrs).forEach(k=>delete attrs[k]);
-    Object.keys(mancerattrs).forEach(k=>delete mancerattrs[k]);
+    Object.keys(mancer.data).forEach(k=>delete mancer.data[k]);
+}
+
+async function loadCompendium(name,compendium) {
+    log("Loading data for",name,"compendium...")
+    try {
+        var dir = fs.readdirSync(__dirname+"/scraper/cache/"+name);
+        for(i in dir) {
+            try {
+                var page = fs.readFileSync(__dirname+"/scraper/cache/"+name+'/'+dir[i]);
+                page = JSON.parse(page);
+                compendium[page.name] = page;
+            }
+            catch (e) {
+                console.warn("Unable to parse compendium entry: ",dir[i]);
+            }
+        }
+    }
+    catch(e) {
+        console.warn("Unable to load compendium for",name);
+        console.warn("Run `verifyjs --scrape username password",name,"` to download the compendium files.");
+    }
 }

@@ -13,6 +13,37 @@
             ],
             "program": "${workspaceFolder}\\index.js",
             "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/src/js", "--watch"]
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test --mancer",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\index.js",
+            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/src/js", "--watch", "--comp=starfinder"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test --scrape",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\index.js",
+            "args": ["--scrape", "nyx.mandala@gmail.com","Non-b1nary!","starfinder"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "scraper",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/scraper/index.js",
+            "args": ["nyx.mandala@gmail.com","Non-b1nary!","starfinder"]
+        },
+
     ]
 }

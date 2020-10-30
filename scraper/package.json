@@ -1,0 +1,15 @@
+{
+  "name": "scraper",
+  "version": "1.0.0",
+  "description": "compendium scraper for roll20",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nightmare": "^3.0.2",
+    "prompt-sync": "^4.2.0"
+  }
+}
