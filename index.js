@@ -3,161 +3,262 @@
 //-- simple code verifier
 //-- created by phoenix ada rose mandala for roll20 user collaboration
 //--
+const mimic = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
+const title = "MIMIC v0.01";
 
 //-- requires
+//nodejs
 const fs = require('fs');
 const process = require('process');
 const vm = require('vm');
+
+//custom
 const r20 = require('r20');
-const _ = require('underscore');
 const scraper = require('scraper');
 
+//external
+const _ = require('underscore');
 const jsdom = require('jsdom');
-const { dir } = require('console');
-const { exit } = require('process');
-const { isString } = require('r20/r20base');
-const { captureRejectionSymbol } = require('events');
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 const {JSDOM} = jsdom;
-const dom = new JSDOM(``, {virtualConsole});
+let jsdomOptions = {virtualConsole}
+let dom = {};
 
-const node_exe = process.argv.shift();
-const thisdir = process.argv.shift();
-
+//global variables
 const attrs = {};
-
-//-- boot
-var target_dir;
-var watch;
-var scrape;
 const comp = [];
 const mancer = {
     current_page: "",
     data: {}
 };
-var filenames = [];
-for (var i = 0; i < process.argv.length; ++i) {
-    if (process.argv[i] == "--watch") {
-        watch = true;
-    }
-    else if (process.argv[i].search("--comp") !== -1) {
-        var name = process.argv[i].substr(process.argv[i].search('=')).replace(/\=|\"|\'/gi,"").replace(" ","%20");
-        loadCompendium(name,comp);
-    }
-    else if (process.argv[i] == "--scrape") {
-        scrape = true;
-        (async function () {
-            await scraper.scrape(process.argv[++i],process.argv[++i],process.argv[++i]);
-            log("Scrape finished.");
-            process.exit(1);
-        })();
-    }
-    else if (!target_dir) {
-        target_dir = process.argv[i];
-    }
-    else {
-        if (process.argv[i].search(".js") === 0) {
-            filenames.push(process.argv[i]+".js");
-        }
-        else {
-            filenames.push(process.argv[i]);
-        }
-    }
-}
-if (scrape) {
-    //do nothing
-}
-else if (!target_dir) {
-    log("No directory provided.");
-    process.exit(1);
-}
-else {
-    mainLoop(target_dir,filenames,watch);
-}
+const translations = {};
+const scripts = {};
+const watched = [];
+let HTMLname = "";
+let comp_name = "";
+let verbose = false;
 
+//-- boot
+(boot = () => {
+    console.log(mimic);
+    console.log(title);
+    //cull node call and directory
+    process.argv.shift();
+    process.argv.shift();
 
-//-- Main loop
-function mainLoop(directory,filenames,watch) {
-    console.log("\x1b[34mProcessing directory ",directory);
-    if (filenames.length !== 0) {
-        console.log("Verifying files:",...filenames,"\x1b[0m");
-    }
-    runScripts(loadFiles(directory,filenames));
-    if (watch) {
-        log("Watching for changes. Press ^C to exit.");
-        var waiting = false;
-        fs.watch(directory, (event, filename)=>{
-            if(waiting) {return;}
-            waiting = true;
-            runScripts(loadFiles(directory,filenames));
-            setTimeout(()=>{waiting = false;}, 1000);
-        });
-    }
+    //define variables
+    let target_dir;
+    let watch;
+    let scrape;
+    let filenames = [];
 
-}
-function loadFiles(directory, filenames) {
-    const scripts = {};
-    if (filenames.length == 0) {
-        try {
-            filenames = fs.readdirSync(target_dir);
-            log("Scraped filenames",filenames);
-        }
-        catch(e) {
-            log("ERROR: Directory not found: ",target_dir);
-            log(e);
-            process.exit(1);
-        }
-    }
-    for (i in filenames) {
-        try {
-            if (filenames[i].search(".js") > 0) {
-                scripts[filenames[i]] = fs.readFileSync(directory + "/" + filenames[i]);
+    //parse argvs
+    for (let i = 0; i < process.argv.length; ++i) {
+        if(process.argv[i][0] === "-") {
+            if (process.argv[i] == "-v" || process.argv[i] == "--verbose") {
+                verbose = true;
+            }
+            else if (process.argv[i] == "--watch") {
+                watch = true;
+            }
+            else if (process.argv[i].search("--comp") !== -1) {
+                let name = process.argv[i].substr(process.argv[i].search('=')).replace(/\=|\"|\'/gi,"").replace(" ","%20");
+                loadCompendium(name);
+            }
+            else if (process.argv[i] == "--scrape") {
+                scrape = true;
+                (async function () {
+                    await scraper.scrape(process.argv[++i],process.argv[++i],process.argv[++i]);
+                    log("Scrape finished.");
+                    process.exit(1);
+                })();
+            }
+            else {
+                console.warn("Unknown parameter passed:",process.argv[i]);
             }
         }
-        catch (e) {
-            log("ERROR LOADING FILE: ",filenames[i],"\n ERROR: ", e);
+        else if (!target_dir) {
+            target_dir = process.argv[i];
+        }
+        else {
+            if (process.argv[i].search(".js") === 0) {
+                filenames.push(process.argv[i]+".js");
+            }
+            else {
+                filenames.push(process.argv[i]);
+            }
         }
     }
-    if (!scripts) {
-        log("No scripts found! Exiting.");
+
+    //route
+    if (scrape) {
+        //do nothing
+    }
+    else if (!target_dir) {
+        log("No directory provided.");
         process.exit(1);
     }
-    return scripts;
-}
-function runScripts(scripts) {
-    try {
-        const contextobj = {
-            _:_,
-            console:console
-        };
-        vm.createContext(contextobj);
-        Object.assign(contextobj,dom);
-        Object.assign(contextobj,r20.api.api);
-        contextobj.postMessage = definePostMessage(contextobj);
-        vm.runInContext(r20.workers.init(contextobj,eval,_),contextobj);
+    else {
+        mainLoop(target_dir,filenames,watch);
+    }
+})();
 
-        setDefaultAttrs();
+//-- Main loop
+async function mainLoop(directory,filenames,watch) {
+    if (verbose) {
+        log("Processing directory: ",directory);
+        if (filenames.length !== 0) {
+            log("Verifying files:",...filenames);
+        }
+    }
+    log("Loading files...");
+    let files = await loadFiles(directory,filenames);
+    runScripts(files);
+    if (watch) {
+        log("Watching for changes. Press ^C to exit.");
+        if (verbose) {
+            log("watching the following files:",watched);
+        }
+
+        waiting = false;
+        for (let i in watched) {
+            fs.watch(watched[i], {persistent: true, interval: 1000}, (event, filename)=>{
+                if (waiting) return;
+                if (HTMLname.search(filename) != -1) loadHTML();
+                else {
+                    let f = watched[i];
+                    let j = watched[i].lastIndexOf('/')+1;
+                    loadFile(f.substring(j),f.substring(0,j));
+                }
+                runScripts();
+
+                waiting = true;
+                setTimeout(()=>{waiting = false},1000)
+            });
+        }
+    }
+}
+async function runScripts() {
+    if (!scripts) {
+        log("No scripts found!");
+        return;
+    }
+    log("Running scripts...");
+    try {
+        if (!dom) {
+            log("NOTE: Running with empty DOM");
+            dom = new JSDOM(``, jsdomOptions);
+        }
+
+        const contextobj = setDefaultAttrs();
         for (i in scripts) {
             vm.runInContext(scripts[i],contextobj,i);
         }
-        resetAttrs();
+        resetAttrs(contextobj);
     }
     catch (e) {
         log("ERROR:",e);
     }
 }
 
-//-- Helpers
-function log(...params) {
-    for (i in params) {
-        if (typeof(params[i]) === "string") {
-            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
+//-- Asset loading
+async function loadHTML() {
+    log("Parsing HTML...");
+    let file = fs.readFileSync(HTMLname);
+    let parsed = file.toString().replace(/<script.+>(\n|.)*<\/script>/gi,""); //strip scripts
+    if (dom.window) dom.window.close();
+    delete dom;
+    dom = new JSDOM(parsed, jsdomOptions);
+}
+async function loadCompendium(name) {
+    log("Loading data for",name,"compendium...")
+    try {
+        let dir = fs.readdirSync(__dirname+"/scraper/cache/"+name);
+        for(i in dir) {
+            try {
+                let page = fs.readFileSync(__dirname+"/scraper/cache/"+name+'/'+dir[i]);
+                page = JSON.parse(page);
+                comp[page.name] = page;
+            }
+            catch (e) {
+                console.warn("Unable to parse compendium entry: ",dir[i]);
+            }
         }
     }
-    console.log(...params);
+    catch(e) {
+        console.warn("Unable to load compendium for",name);
+        console.warn(`Run \`mimic --scrape \<username\> \<password\> \<compendium_name\>\` to download the compendium files.`);
+    }
+}
+async function loadFile(dirent, directory) {
+    let name = dirent.name || dirent;
+    let fullname = (directory? directory+'/'+name : name).replace(/\/+/gi,"/");
+    try {
+        if (dirent.isDirectory && dirent.isDirectory()) {
+            Object.assign(scripts,loadFiles(fullname));
+        }
+        else if (name.substring(name.length-3) === ".js") {
+            if (scripts[name]) delete scripts[name];
+            scripts[name] = fs.readFileSync(fullname);
+            if (!watched[fullname])
+                watched.push(fullname);
+        }
+        else if (name == "sheet.json") {
+            let json = fs.readFileSync(fullname);
+            try {
+                let data = JSON.parse(json);
+                HTMLnameprev = HTMLname;
+                comp_name_prev = comp_name;
+                HTMLname =  (directory + "/" + data.html).replace(/\/+/gi,'/');
+                comp_name = comp_name || data.compendium;
+                if (HTMLnameprev != HTMLname) {
+                    if (HTMLnameprev)
+                        watched.replace(HTMLnameprev,HTMLname);
+                    else
+                        watched.push(HTMLname);
+                    await loadHTML();
+                }
+                if (comp_name_prev != comp_name) {
+                    await loadCompendium(comp_name);
+                }
+            }
+            catch(e) {log("Error parsing sheet.json:",e);}
+            watched.push(fullname);
+        }
+        else if (name.substring(name.length-5) === ".json") {
+            let json = fs.readFileSync(fullname);
+            try {
+                translations[name.substring(0,name.length-5)] = JSON.parse(json.toString());
+            }
+            catch(e) {log("Error parsing translations.json:",e);}
+            watched.push(fullname);
+        }
+    }
+    catch (e) {
+        log("ERROR LOADING FILE: ",fullname,"\n ERROR: ", e);
+    }
+}
+async function loadFiles(directory, filenames = []) {
+    if (filenames.length == 0) {
+        try {
+            filenames = fs.readdirSync(directory, {withFileTypes:true});
+            let names = [];
+            filenames.forEach((filename)=>{names.push(filename.name)});
+            if (verbose) log("Scraped filenames from dir:",directory,names);
+        }
+        catch(e) {
+            log("ERROR: Directory not found: ",directory);
+            log(e);
+            process.exit(1);
+        }
+    }
+    for (i in filenames) {
+        loadFile(filenames[i], directory);
+    }
 }
 
+//-- Roll20 Emulation
 function definePostMessage(contextobj) {
     return function postMessage(message) {
         // TODO:
@@ -174,16 +275,18 @@ function definePostMessage(contextobj) {
             "getcompendiumpage":"attrreqfulfilled",
             "getcompendiumquery":"attrreqfulfilled",
             "":"setActiveCharacter",
-            "":"loadTranslationStrings",
+            "loadTranslationStrings":"loadTranslationStrings",
             "":"setCharmancerData"
         }
 
         returned = {data: {id: message.id, type: typeMap[message.type]}};
         switch(message.type) {
-
+            default: //passthrough
+            returned.data.data = message.data;
+                break;
             case("getcompendiumpage"):
             if (comp) {
-                var arr = message.data;
+                let arr = message.data;
                 if (typeof(message.data) == "string") {
                     arr = [];
                     arr.push(message.data);
@@ -199,7 +302,7 @@ function definePostMessage(contextobj) {
             break;
             case("getcompendiumquery"):
             if (comp) {
-                var data = message.data[0],
+                let data = message.data[0],
                     query = {},
                     matched_pages = [];
 
@@ -207,17 +310,17 @@ function definePostMessage(contextobj) {
                     data = data.split(" ");
                 }
                 for (i in data) {
-                    var obj = data[i].split(":");
+                    let obj = data[i].split(":");
                     query[obj[0]] = new RegExp(obj[1],"i");    
                 }
                 try {
                     for (i in comp) {
-                        var page = comp[i];
+                        let page = comp[i];
                         matched = false;
                         for (qkey in query) {
                             for (dkey in page.data) {
-                                var val = page.data[dkey];
-                                var regex = query[qkey];
+                                let val = page.data[dkey];
+                                let regex = query[qkey];
                                 if (dkey == qkey && val.match(regex)) {
                                     matched = true;
                                     break;
@@ -240,6 +343,30 @@ function definePostMessage(contextobj) {
                 console.warn("Trying to get compendium page when no compendium has been set.");
             break;
             case("setattrs"):
+            let data = message.data;
+            for (i in data) {
+                let event = {};
+                event.previous_value = attrs[i];
+                event.updated_value = data[i];
+                event.sourceSection = message.sourceSection || '';
+                event.oattr = message.oattr || '';
+                event.eventname = `${i}`;
+                event.sourcetype = "worker";
+
+                attrs[i] = data[i];
+                let found = contextobj.dom.window.document.querySelectorAll(`[name=attr_${i}]`);
+
+                found.forEach((node)=>{
+                    node.setAttribute("value",i);
+                    if (verbose)
+                        log("HTML node updated",node.outerHTML);
+                })
+
+                if (!message.options || !message.options.silent) {
+                    contextobj.trigger(event);
+                }
+            }
+            break;
             case("attrreq"):
             case("attrlist"):
             returned.data.data = {};
@@ -253,33 +380,70 @@ function definePostMessage(contextobj) {
         contextobj.messageHandler(returned);
     }
 }
-
 function setDefaultAttrs() {
+    const contextobj = {
+        _:_,
+        console:console,
+        dom: dom
+    };
+
+    vm.createContext(contextobj);
+    Object.assign(contextobj,r20.api.api);
+    contextobj.postMessage = definePostMessage(contextobj);
+    vm.runInContext(r20.workers.init(contextobj,eval,_),contextobj);
+
+    //load English translations by default
+    if (translations) {
+        if (verbose) log("Parsing translations");
+        contextobj.postMessage({
+            type:"loadTranslationStrings",
+            data:{values:translations["en"], lang:"en"}
+        });
+    }
     attrs["character_name"] = "Character Name";
     mancer.data = {};
+    let found = dom.window.document.querySelectorAll("[name*=attr_]");
+    for (let i in found) {
+        try {
+            let node = found[i];
+            if (node.getAttribute) {
+                let name = node.getAttribute("name").replace("attr_","");
+                let value = node.getAttribute("value");
+                attrs[name] = value || "";
+            }
+        }
+        catch(e) {
+            console.warn(found[i],e);
+        }
+    }
+
+     dom.window.document.querySelectorAll("[type=action][name*=act_]").forEach((node)=>{
+        if (node.getAttribute) {
+            node.onclick = ()=>{
+                let name = "clicked:" + node.getAttribute("name").replace("act_","");
+                let message = {
+                    eventname: name,
+                    triggerType: "player",
+                    oattr: node
+                };
+                contextobj.trigger(message)
+            };
+        }
+    });
+    return contextobj;
 }
 function resetAttrs() {
     Object.keys(attrs).forEach(k=>delete attrs[k]);
     Object.keys(mancer.data).forEach(k=>delete mancer.data[k]);
+    delete contextobj;
 }
 
-async function loadCompendium(name,compendium) {
-    log("Loading data for",name,"compendium...")
-    try {
-        var dir = fs.readdirSync(__dirname+"/scraper/cache/"+name);
-        for(i in dir) {
-            try {
-                var page = fs.readFileSync(__dirname+"/scraper/cache/"+name+'/'+dir[i]);
-                page = JSON.parse(page);
-                compendium[page.name] = page;
-            }
-            catch (e) {
-                console.warn("Unable to parse compendium entry: ",dir[i]);
-            }
+//-- Helpers
+function log(...params) {
+    for (i in params) {
+        if (typeof(params[i]) === "string") {
+            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
         }
     }
-    catch(e) {
-        console.warn("Unable to load compendium for",name);
-        console.warn("Run `verifyjs --scrape username password",name,"` to download the compendium files.");
-    }
+    console.log(...params);
 }

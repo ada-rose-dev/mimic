@@ -12,7 +12,17 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\index.js",
-            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/src/js", "--watch"]
+            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/", "--watch"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program (verbose)",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\index.js",
+            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/", "--watch", "-v"]
         },
         {
             "type": "node",
@@ -32,18 +42,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\index.js",
-            "args": ["--scrape", "nyx.mandala@gmail.com","Non-b1nary!","starfinder"]
+            "args": ["--scrape", "YOUR UN HERE","YOUR PW HERE","YOUR COMPENDIUM_NAME HERE"]
         },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "scraper",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}/scraper/index.js",
-            "args": ["nyx.mandala@gmail.com","Non-b1nary!","starfinder"]
-        },
-
     ]
 }

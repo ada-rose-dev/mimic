@@ -93,7 +93,7 @@ exports.init = function (self, globalEval, globalUnderscore) {
             info.roll = eventinfo.data;
         }
 
-        //console.log("Triggering for " + subname);
+        console.log("Triggering for " + subname);
 
         _activeTrigger = subname.split(":")[1];
 
