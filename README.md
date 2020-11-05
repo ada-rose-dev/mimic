@@ -40,7 +40,7 @@
 * Full support for compendium functions.
 * Full support for charactermancer functions (IN PROGRESS)
 * Full support for repeating section functions (IN PROGRESS)
-* Full support for HTML manipulation with (jsdom)[https://github.com/jsdom/jsdom]
+* Full support for HTML manipulation with [jsdom](https://github.com/jsdom/jsdom)
 
 ## limitations
 __Importantly, `mimic` does *not* connect to the Roll20 servers and is *not* to be used for final testing, only for desktop-based debugging.__
