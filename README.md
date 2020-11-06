@@ -32,10 +32,13 @@
                 ■■■■                              ■■            
               ■■                                                
 ```
-`mimic` is a simple Node.JS-based command-line program to debug Roll20 character sheets on your desktop.
+mimic is a simple Node-based command-line program to debug Roll20 character sheets on your desktop.
+
+## motivation
+Constantly uploading your sheets to the web server can be a tedious and unreliable process. Additionally, some complex sheets require advanced debugging that the virtual machine on the Roll20 server simply can't handle. For these cases, consider using mimic.
 
 ## features
-* Emulation of Roll20's sheet workers and API in a DOM environment.
+* Emulation of Roll20's sheet workers API in a virtual DOM environment.
 * Full support for basic sheet editing functions.
 * Full support for compendium functions.
 * Full support for charactermancer functions (IN PROGRESS)
@@ -43,11 +46,11 @@
 * Full support for HTML manipulation with [jsdom](https://github.com/jsdom/jsdom)
 
 ## limitations
-__Importantly, `mimic` does *not* connect to the Roll20 servers and is *not* to be used for final testing, only for desktop-based debugging.__
+__Importantly, mimic does *not* connect to the Roll20 servers and is *not* to be used for final testing. Only usee mimic for desktop-based debugging.__
 
-Additionally, scripts loaded into `mimic` are *not* guaranteed to run in the order they are loaded into your HTML. This is because `mimic` *removes* any scripts from the HTML before running. This is done to keep runtimes fast. We may introduce a simple `mimic.json` file in the future to offer environment settings, including script execution order.
+Additionally, scripts loaded into `mimic` are *not* guaranteed to run in the order they are loaded into your HTML. This is because mimic *removes* any scripts from the HTML before running. This is done to keep runtimes fast. We may introduce a simple `mimic.json` file in the future to offer environment settings, including script execution order.
 
-`mimic` does not and will never have in-built support for drag'n'drop functionality or virtual tabletop emulation. This program is for character sheets only.
+mimic does not and will never have built-in support for drag'n'drop functionality, roll templates, or virtual tabletop emulation. This program is for character sheets only.
 
 ## usage
 1. Clone the repository wherever you'd like.
@@ -55,12 +58,20 @@ Additionally, scripts loaded into `mimic` are *not* guaranteed to run in the ord
 1. Run the following command: `npm install . -g`
 1. Run `mimic $YOUR_DIRECTORY`
 
-Additionally, you can specify which files to track by typing their names. By default, `mimic` will scrape the directory for you.
+Additionally, you can specify which files to track by typing their names. By default, mimic will scrape the directory for you.
 
-`mimic` will read your `sheet.json` and scan your directory for HTML and translation files. I recommend running [pug](https://pugjs.org/api/getting-started.html) and [sass](https://sass-lang.com/) alongside `mimic` for maximum efficiency.
+mimic will read your `sheet.json` and scan your directory for HTML and translation files. Additionally, it will search for the relevant compendium cache.
 
-### the `mimic` object, testing, and DOM manipulation
-Testing with `mimic` is as easy as using the `mimic` object to call functions. No additional includes or definitions necessary.
+I recommend running [pug](https://pugjs.org/api/getting-started.html) to generate HTML, [sass](https://sass-lang.com/) to generate CSS, and mimic to test JavaScript.
+
+### command line options
+* `--watch` - Watch for changes
+* `--verbose`/`-v` - Print additional logs - useful for debugging the `mimic` environment
+* `--scrape $USERNAME $PASSWORD $COMPENDIUM_NAME` -- This will run a [simple webscraper.](#scraping)
+* `--comp=$COMPENDIUM_NAME` - Manually sets the compendium.
+
+### the `mimic` object: testing, debugging, and DOM manipulation
+Testing with mimic is as easy as using the `mimic` object to call functions. No additional includes or definitions necessary.
 
 I recommend adding a `test.js` file to your workspace so you can run unit tests on your sheet. For example, you might want to check that all your action buttons are working properly. Use the in-built DOM functionality to pass MouseEvents to all your action buttons!
 
@@ -80,17 +91,18 @@ for (i in mancerPages) {
 finishCharactermancer();
 ```
 
-### command line options
-* `--watch` - Watch for changes
-* `--verbose`/`-v` - Print additional logs - useful for debugging the `mimic` environment
-* `--scrape $USERNAME $PASSWORD $COMPENDIUM_NAME` -- This will run a [simple webscraper.](#scraping)
-* `--comp=$COMPENDIUM_NAME` - Manually sets the compendium.
+Although mimic uses Node's `vm` environment to run sheet scripts, debugging with mimic is straightforward. Simply place the keyword `debugger;` wherever you need a sheet script to break. Note that placing breakpoints in your IDE will not work: you must manually type in the breakpoint.
 
-### scraping
+### compendium scraping
 Running `mimic --scrape` will download all the pages for the passed compendium. It uses [nightmarejs](http://www.nightmarejs.org/) to log you into Roll20 and manually scrapes the relevant pages. The scraped files will be saved in a cache in your install directory. Don't lose it!
 
 __Because --scrape requires a log-in, if you don't have a Roll20 Pro account you probably won't have access to this feature. Sorry.__
 Additionally, because we do not have access to the Roll20 backend, this process can be quite slow for larger compendiums. Use this if you need a coffee break :)
+
+### watching for changes
+Running `mimic --watch` will allow mimic to keep running in the background, watching for file changes. This includes automatically updating the DOM when HTML changes are made.
+
+mimic will need to be restarted to find new files. This may change when we add `mimic.json`.
 
 ### debugging `mimic`
 If you'd like, you can open `mimic` in your preferred editor and use its built-in Node debugging tools. For VSCode, an example is provided. If you want to use this example, you will need to edit the `"args"` value in `launch.json`.
