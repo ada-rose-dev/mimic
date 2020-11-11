@@ -3,8 +3,9 @@
 //-- simple code verifier
 //-- created by phoenix ada rose mandala for roll20 user collaboration
 //--
-const mimic = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
-const title = "MIMIC v0.01";
+let mimic_img = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
+let title = "MIMIC v0.01";
+console.log(title);
 
 //-- requires
 //nodejs
@@ -13,11 +14,10 @@ const process = require('process');
 const vm = require('vm');
 
 //custom
-const r20 = require('r20');
 const scraper = require('scraper');
+const Mimic = require('./initializer');
 
 //external
-const _ = require('underscore');
 const jsdom = require('jsdom');
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
@@ -26,23 +26,16 @@ let jsdomOptions = {virtualConsole}
 let dom = {};
 
 //global variables
-const attrs = {};
 const comp = [];
-const mancer = {
-    current_page: "",
-    data: {}
-};
-const translations = {};
 const scripts = {};
 const watched = [];
+const translations = {};
 let HTMLname = "";
 let comp_name = "";
 let verbose = false;
 
 //-- boot
 (boot = () => {
-    console.log(mimic);
-    console.log(title);
     //cull node call and directory
     process.argv.shift();
     process.argv.shift();
@@ -74,6 +67,9 @@ let verbose = false;
                     process.exit(1);
                 })();
             }
+            else if (process.argv[i] == "--noimg") {
+                mimic_img = "";
+            }
             else {
                 console.warn("Unknown parameter passed:",process.argv[i]);
             }
@@ -91,6 +87,9 @@ let verbose = false;
         }
     }
 
+    console.log(mimic_img);
+    console.log(title);
+
     //route
     if (scrape) {
         //do nothing
@@ -105,6 +104,7 @@ let verbose = false;
 })();
 
 //-- Main loop
+//TODO: watch seems to be reloading files incorrectly - seems like it only gets partway through the new file before trying to execute it
 async function mainLoop(directory,filenames,watch) {
     if (verbose) {
         log("Processing directory: ",directory);
@@ -151,11 +151,11 @@ async function runScripts() {
             dom = new JSDOM(``, jsdomOptions);
         }
 
-        const contextobj = setDefaultAttrs();
+        const mimic = new Mimic(dom, comp, translations);
         for (i in scripts) {
-            vm.runInContext(scripts[i],contextobj,i);
+            vm.runInContext(scripts[i],mimic,i);
         }
-        resetAttrs(contextobj);
+        Mimic.close();
     }
     catch (e) {
         log("ERROR:",e);
@@ -256,186 +256,6 @@ async function loadFiles(directory, filenames = []) {
     for (i in filenames) {
         loadFile(filenames[i], directory);
     }
-}
-
-//-- Roll20 Emulation
-function definePostMessage(contextobj) {
-    return function postMessage(message) {
-        // TODO:
-        // fill out this switch
-        // return appropriate values to messageHandler
-        // several front-end events can just be ignored (e.g. setCharmancerText)
-
-        typeMap = {
-            "eval": "eval",
-            "trigger":"trigger",
-            "attrreq":"attrreqfulfilled",
-            "attrlist":"attrlistreqfulfilled",
-            "setattrs":"setattrreqfulfilled",
-            "getcompendiumpage":"attrreqfulfilled",
-            "getcompendiumquery":"attrreqfulfilled",
-            "":"setActiveCharacter",
-            "loadTranslationStrings":"loadTranslationStrings",
-            "":"setCharmancerData"
-        }
-
-        returned = {data: {id: message.id, type: typeMap[message.type]}};
-        switch(message.type) {
-            default: //passthrough
-            returned.data.data = message.data;
-                break;
-            case("getcompendiumpage"):
-            if (comp) {
-                let arr = message.data;
-                if (typeof(message.data) == "string") {
-                    arr = [];
-                    arr.push(message.data);
-                }
-                returned.data.data = {};
-                for (i in arr) {
-                    Object.assign(returned.data.data,(comp[message.data].data));
-                    mancer.current_page = comp[message.data].data;
-                }
-            }
-            else
-                console.warn("Trying to get compendium page when no compendium has been set.");
-            break;
-            case("getcompendiumquery"):
-            if (comp) {
-                let data = message.data[0],
-                    query = {},
-                    matched_pages = [];
-
-                if (typeof(data) === "string") {
-                    data = data.split(" ");
-                }
-                for (i in data) {
-                    let obj = data[i].split(":");
-                    query[obj[0]] = new RegExp(obj[1],"i");    
-                }
-                try {
-                    for (i in comp) {
-                        let page = comp[i];
-                        matched = false;
-                        for (qkey in query) {
-                            for (dkey in page.data) {
-                                let val = page.data[dkey];
-                                let regex = query[qkey];
-                                if (dkey == qkey && val.match(regex)) {
-                                    matched = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (matched) {
-                            matched_pages.push(page.data);
-                        }
-                    }
-                }
-                catch (e) {
-                    console.warn("unable to fetch compendium query: ",query);
-                    console.warn(e);
-                }
-
-                returned.data.data = matched_pages;
-            }
-            else
-                console.warn("Trying to get compendium page when no compendium has been set.");
-            break;
-            case("setattrs"):
-            let data = message.data;
-            for (i in data) {
-                let event = {};
-                event.previous_value = attrs[i];
-                event.updated_value = data[i];
-                event.sourceSection = message.sourceSection || '';
-                event.oattr = message.oattr || '';
-                event.eventname = `${i}`;
-                event.sourcetype = "worker";
-
-                attrs[i] = data[i];
-                let found = contextobj.dom.window.document.querySelectorAll(`[name=attr_${i}]`);
-
-                found.forEach((node)=>{
-                    node.setAttribute("value",i);
-                    if (verbose)
-                        log("HTML node updated",node.outerHTML);
-                })
-
-                if (!message.options || !message.options.silent) {
-                    contextobj.trigger(event);
-                }
-            }
-            break;
-            case("attrreq"):
-            case("attrlist"):
-            returned.data.data = {};
-            if (Array.isArray(message.data)) {
-                for (i in message.data) {
-                    returned.data.data[message.data[i]] = attrs[message.data[i]];
-                }
-            }
-            break;
-        }
-        contextobj.messageHandler(returned);
-    }
-}
-function setDefaultAttrs() {
-    const contextobj = {
-        _:_,
-        console:console,
-        dom: dom
-    };
-
-    vm.createContext(contextobj);
-    Object.assign(contextobj,r20.api.api);
-    contextobj.postMessage = definePostMessage(contextobj);
-    vm.runInContext(r20.workers.init(contextobj,eval,_),contextobj);
-
-    //load English translations by default
-    if (translations) {
-        if (verbose) log("Parsing translations");
-        contextobj.postMessage({
-            type:"loadTranslationStrings",
-            data:{values:translations["en"], lang:"en"}
-        });
-    }
-    attrs["character_name"] = "Character Name";
-    mancer.data = {};
-    let found = dom.window.document.querySelectorAll("[name*=attr_]");
-    for (let i in found) {
-        try {
-            let node = found[i];
-            if (node.getAttribute) {
-                let name = node.getAttribute("name").replace("attr_","");
-                let value = node.getAttribute("value");
-                attrs[name] = value || "";
-            }
-        }
-        catch(e) {
-            console.warn(found[i],e);
-        }
-    }
-
-     dom.window.document.querySelectorAll("[type=action][name*=act_]").forEach((node)=>{
-        if (node.getAttribute) {
-            node.onclick = ()=>{
-                let name = "clicked:" + node.getAttribute("name").replace("act_","");
-                let message = {
-                    eventname: name,
-                    triggerType: "player",
-                    oattr: node
-                };
-                contextobj.trigger(message)
-            };
-        }
-    });
-    return contextobj;
-}
-function resetAttrs() {
-    Object.keys(attrs).forEach(k=>delete attrs[k]);
-    Object.keys(mancer.data).forEach(k=>delete mancer.data[k]);
-    delete contextobj;
 }
 
 //-- Helpers

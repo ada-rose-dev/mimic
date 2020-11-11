@@ -1,4 +1,0 @@
-===
-. Polish this package
-. Publish this package
-. Share it with the UC team :)

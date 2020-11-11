@@ -16,7 +16,6 @@
   "dependencies": {
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
-    "r20": "file:r20",
     "scraper": "file:scraper",
     "underscore": "^1.11.0"
   }
