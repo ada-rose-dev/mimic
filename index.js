@@ -3,9 +3,9 @@
 //-- simple code verifier
 //-- created by phoenix ada rose mandala for roll20 user collaboration
 //--
-let mimic_img = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
+let mimic_img_64 = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
+let mimic_img_32 = "     ■■■■■■■■■■■■■■■            \n   ■■~~~~~~~~     ~~■■■■■       \n  ■~~~~~~~~  ■■■■■  ~~~~ ■■     \n ■~~~~~~~~ ■■     ■■ ~~~~~ ■■   \n ■■■■■■~~~ ■■■   ■■■ ~~~~~~~ ■  \n //  ■■■■■■~~~~~~~~~~~~~~~~~~   \n/  \\\\  \\\\  \\\\   \\\\  ■■■■■■■■■■  \n    \\   \\    \\    \\    \\\\    \\\\ \n \\    /    /        /    \\/   /\\\n \\\\  //  // /****\\ //   //  //  \n ■■■■■■■■  | *****\\     ~~~■■   \n ■■~~~~~~  | *******\\/*\\ ~~■■   \n ■■~~~~~~~~  \\ ********/\\ ~~~■■ \n  ■■ ~~~~~~~~  \\ ****   /\\ ~~■■ \n  ■■~~~~~~~~~~~      ~ | *|     \n  ■■■■■■■■■■            --      ";
 let title = "MIMIC v0.01";
-console.log(title);
 
 //-- requires
 //nodejs
@@ -15,10 +15,11 @@ const vm = require('vm');
 
 //custom
 const scraper = require('scraper');
-const Mimic = require('./initializer');
+const {Mimic, log} = require('./modules/initializer');
 
 //external
 const jsdom = require('jsdom');
+log("Starting up...");
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 const {JSDOM} = jsdom;
@@ -87,7 +88,7 @@ let verbose = false;
         }
     }
 
-    console.log(mimic_img);
+    console.log(mimic_img_32);
     console.log(title);
 
     //route
@@ -172,7 +173,7 @@ async function loadHTML() {
     dom = new JSDOM(parsed, jsdomOptions);
 }
 async function loadCompendium(name) {
-    log("Loading data for",name,"compendium...")
+    log(`Loading data for ${name} compendium...`)
     try {
         let dir = fs.readdirSync(__dirname+"/scraper/cache/"+name);
         for(i in dir) {
@@ -256,14 +257,4 @@ async function loadFiles(directory, filenames = []) {
     for (i in filenames) {
         loadFile(filenames[i], directory);
     }
-}
-
-//-- Helpers
-function log(...params) {
-    for (i in params) {
-        if (typeof(params[i]) === "string") {
-            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
-        }
-    }
-    console.log(...params);
 }

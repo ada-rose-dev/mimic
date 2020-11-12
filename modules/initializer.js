@@ -2,16 +2,9 @@
 const _ = require('underscore');
 const vm = require('vm');
 const r20 = require('./r20workers');
-const {definePostMessage, repeatingSection, repeatingData} = require("./messageHandler");
+const {definePostMessage, repeatingSection, repeatingData, attrs, repeatingSections, mancer, log} = require("./messageHandler");
 
 //- consts
-const attrs = {};
-const repeatingSections = [];
-const mancer = {
-    active: false,
-    current_page: "",
-    pages: {}
-};
 const mimic = {};
 
 
@@ -35,14 +28,6 @@ function getElementAttrs(element, attrs){
         }
     }
     return attrs;
-}
-function loadCharmancer(){
-    //load charmancer pages
-    mimic.document.querySelectorAll("charmancer[class*=sheet-charmancer-").forEach((node)=>{
-        let name = node.className.match(/sheet-charmancer-([^\s]+)/)[1];
-        mancer.pages[name] = {data: {}, values: {}};
-        //mancer.pages[name].getNode = ()=>{return contextobj.document.querySelectorAll("charmancer [name=sheet-charmancer-"+name+'-')};
-    });
 }
 function registerEventListeners(){
     mimic.document.querySelectorAll("[type=action][name*=act_]").forEach((node)=>{
@@ -76,14 +61,23 @@ function createRepeatingRow(repdata_or_id){
     if (typeof(repdata) === "string") {
         repdata = repeatingSections.find((data)=>{data.id == repdata})
     }
+
     let id = mimic.generateRowID();
     let document = mimic.document;
     let section = document.createElement("div");
+
     section.className = "repitem";
     section.setAttribute("data-reprow-id", id);
     section.innerHTML = repdata.fieldset.innerHTML;
     repdata.repcontainer.append(section);
-    repdata.repsecs.push(new repeatingSection(id,section));
+
+    let repsec = new repeatingSection(id,section);
+    section.querySelectorAll("[name*=attr_]").forEach((element)=>{
+        let name = element.getAttribute("name").replace("attr_","");
+        let value = element.getAttribute("value");
+        repsec.attrs[name] = value;
+    })
+    repdata.repsecs.push(repsec);
 }
 function registerRepsecContainers(){
     let document = mimic.document;
@@ -158,14 +152,4 @@ class Mimic {
         return this.open(dom, comp, translations);
     }
 }
-module.exports = Mimic;
-
-//-- Helpers
-function log(...params) {
-    for (i in params) {
-        if (typeof(params[i]) === "string") {
-            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
-        }
-    }
-    console.log(...params);
-}
+module.exports = {Mimic: Mimic, log:log};

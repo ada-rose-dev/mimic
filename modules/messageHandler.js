@@ -1,4 +1,5 @@
 //- class defs
+"use strict"
 class repeatingSection {
     constructor(id, element, attrs = {}) {
         this.id = id;                       
@@ -18,6 +19,14 @@ class repeatingData {
 //-- Message Handling
 const comp = {};
 const attrs = {};
+const repeatingSections = [];
+const mancer = {
+    active: false,
+    current_page: "",
+    pages: {}
+};
+const verbose = false;
+
 const handler = {
     act: (mimic, message, request, triggerevents) => {
         if (mimic.mancer.active) {
@@ -34,7 +43,12 @@ const handler = {
         return {request: request, triggerevents: triggerevents};
     },
     startcharactermancer: (mimic, message, request, triggerevents) => {
-        loadCharmancer(mimic);
+        //load charmancer pages
+        mimic.document.querySelectorAll("charmancer[class*=sheet-charmancer-").forEach((node)=>{
+            let name = node.className.match(/sheet-charmancer-([^\s]+)/)[1];
+            mancer.pages[name] = {data: {}, values: {}};
+            //mancer.pages[name].getNode = ()=>{return contextobj.document.querySelectorAll("charmancer [name=sheet-charmancer-"+name+'-')};
+        });
 
         let page = "";
         for (let i in mimic.mancer.pages) {
@@ -132,7 +146,6 @@ const handler = {
         return {request: request, triggerevents: triggerevents};
     },
     setattrs: (mimic, message, request, triggerevents) => {
-        let mancer = mimic.mancer;
         let data = message.data;
         let prefix = mancer.active ? "comp_" : "attr_";
         let attrCache = mancer.active ? mancer.pages[mancer.current_page].data : attrs;
@@ -171,31 +184,45 @@ const handler = {
     },
     attrreq: (mimic, message, request, triggerevents) => {
         request.data = {};
-        if (Array.isArray(message.data)) {
-            for (i in message.data) {
-                request.data[message.data[i]] = attrs[message.data[i]];
+        let attrreq = message.data;
+        if (Array.isArray(attrreq)) {
+            for (i in attrreq) {
+                let attr = attrreq[i];
+                if (attr.includes("repeating_")) {
+                    let split = attr.split("_");
+                    let sectionName = split[1];
+                    let sectionID = split[2];
+                    let parsedAttr = attr.replace(`repeating_${sectionName}_${sectionID}_`,"");
+                    for (let j in repeatingSections) {
+                        if (repeatingSections[j].id == sectionName) {
+                            for (let k in repeatingSections[j].repsecs) {
+                                let repsec = repeatingSections[j].repsecs[k];
+                                if (repsec.id == sectionID) {
+                                    request.data[attr] = repsec.attrs[parsedAttr];
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    request.data[attr] = attrs[attr];
+                }
             }
         }
         return {request: request, triggerevents: triggerevents};
     },
     attrlist: (mimic, message, request, triggerevents) => {
-
-        //- # TODO: Fill this out #
-        //- Need to parse HTML so we can add repeating sections.
-        //- will need an object(?) to handle this; some place to store the repeating sections
-        //-
-        //- will need to store:
-        //- * name of repeating section container
-        //- * repeating section IDs
-        //- * repeating section template HTML
-        //- * repeating section attributes
-        //-
-        //- class repsec {id, attributes}
-        //- class respec_container = {id, template, repeating_section[]}
-        //- the template can contain a repsec_container - how to get tree structure?
-        //- --> HTML parsed recursively to get repeating section structure
-        //- must check for infinite loops!
-
+        let sectionName = message.data.replace("repeating_","");
+        let ids = [];
+        for (let i in repeatingSections) {
+            if (repeatingSections[i].id == sectionName) {
+                let repsecs = repeatingSections[i].repsecs;
+                for (let j in repsecs) {
+                    ids.push(repsecs[j].id);
+                }
+            }
+        }
+        request.data = ids;
         return {request: request, triggerevents: triggerevents};
     },
     addrepeatingsection: (mimic, message, request, triggerevents) => {
@@ -226,7 +253,9 @@ function definePostMessage(mimic, _comp, _attrs) {
 
         let request = {id: message.id, type: typeMap[message.type], data:message.data};
 
-        log("message: ",message.type);
+        if (verbose) {
+            log(`message: ${message.type}`,message);
+        }
         let response = handler[message.type](mimic,message,request,[]);
 
         mimic.messageHandler({data: response.request});
@@ -238,16 +267,40 @@ function definePostMessage(mimic, _comp, _attrs) {
 
 //-- Helpers
 function log(...params) {
-    for (i in params) {
+    for (let i in params) {
         if (typeof(params[i]) === "string") {
             params[i] = `\x1b[33m${params[i]}\x1b[0m`;
         }
+        else if (typeof(params[i] === "object")) {
+            let newparams = [params[i], `\x1b[0m`];
+            params.splice(i,0,newparams);
+            params[i] = `\x1b[2m\x1B[35m`
+        }
+        else if (typeof(params[i] === "array")) {
+            let newparams = [params[i], `\x1b[0m`];
+            params.splice(i,0,newparams);
+            params[i] = `\x1b[2m\x1B[36m`
+        }
+        else if (typeof(params[i] === "number")) {
+            params[i] = `\x1B[37m${params[i]}\x1b[0m`;
+        }
     }
-    console.log(...params);
+    if (params.length > 1) {
+        console.log(params[0]);
+        console.groupCollapsed("...");
+        console.log(...params);
+        console.groupEnd();
+    }
+    else console.log(...params);
 }
 
 module.exports = {
     definePostMessage: definePostMessage,
     repeatingData: repeatingData,
-    repeatingSection: repeatingSection
+    repeatingSection: repeatingSection,
+    comp: comp,
+    repeatingSections: repeatingSections,
+    mancer: mancer,
+    attrs: attrs,
+    log: log
 };
