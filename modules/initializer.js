@@ -2,14 +2,12 @@
 const _ = require('underscore');
 const vm = require('vm');
 const r20 = require('./r20workers');
-const {definePostMessage, repeatingSection, repeatingData, attrs, repeatingSections, mancer, log} = require("./messageHandler");
-
-//- consts
-const mimic = {};
+const {postMessage, RepeatingSection, RepeatingData, log} = require("./messageHandler");
+const testEnvironment = require("./testEnvironment");
 
 
 //-- Roll20 Context Initialization
-function sanitizeHTML(){
+function sanitizeHTML(mimic){
 
 }
 function getElementAttrs(element, attrs){
@@ -29,7 +27,7 @@ function getElementAttrs(element, attrs){
     }
     return attrs;
 }
-function registerEventListeners(){
+function registerEventListeners(mimic){
     mimic.document.querySelectorAll("[type=action][name*=act_]").forEach((node)=>{
         if (node.getAttribute) {
             node.onclick = ()=>{
@@ -46,7 +44,7 @@ function registerEventListeners(){
         }
     });
 }
-function loadTranslations(translations, lang="en"){
+function loadTranslations(mimic, translations, lang="en"){
     //load translations
     if (translations) {
         if (this.verbose) log("Parsing translations");
@@ -56,7 +54,7 @@ function loadTranslations(translations, lang="en"){
         });
     }
 }
-function createRepeatingRow(repdata_or_id){
+function createRepeatingRow(mimic,repdata_or_id){
     let repdata = repdata_or_id;
     if (typeof(repdata) === "string") {
         repdata = repeatingSections.find((data)=>{data.id == repdata})
@@ -71,7 +69,7 @@ function createRepeatingRow(repdata_or_id){
     section.innerHTML = repdata.fieldset.innerHTML;
     repdata.repcontainer.append(section);
 
-    let repsec = new repeatingSection(id,section);
+    let repsec = new RepeatingSection(id,section);
     section.querySelectorAll("[name*=attr_]").forEach((element)=>{
         let name = element.getAttribute("name").replace("attr_","");
         let value = element.getAttribute("value");
@@ -79,7 +77,7 @@ function createRepeatingRow(repdata_or_id){
     })
     repdata.repsecs.push(repsec);
 }
-function registerRepsecContainers(){
+function registerRepsecContainers(mimic,repeatingSections){
     let document = mimic.document;
     document.querySelectorAll("fieldset").forEach((fieldset)=>{
         let name = fieldset.className;
@@ -104,9 +102,9 @@ function registerRepsecContainers(){
             btn.innerHTML = "+Add";
             control.append(btn);
 
-            let data = new repeatingData(name.replace("repeating_",""), fieldset, container);
+            let data = new RepeatingData(name.replace("repeating_",""), fieldset, container);
             repeatingSections.push(data);
-            btn.addEventListener("click",()=>{createRepeatingRow(data);});
+            btn.addEventListener("click",()=>{createRepeatingRow(mimic,data);});
         }
     })
     if (this.verbose) {
@@ -118,35 +116,44 @@ function registerRepsecContainers(){
 
 //Exported class
 class Mimic {
+    attrs = {
+        "character_name": "MIMIC CHARACTER"
+    };
+    mancer = {
+        active: false,
+        current_page: "",
+        pages: {}
+    };
+    repeatingSections = [];
+
     open(dom,comp,translations) {
-        let context = {
-            _:_,
-            console:console,
+        
+        //initialize vm context (this is sensitive, don't try to rearrange it)
+        this.context = {
+            _: _,
+            console: console,
             dom: dom,
+            window: dom.window,
             document: dom.window.document
         };
-        Object.assign(mimic,context);
+        vm.createContext(this.context);
 
-        //initialize context
-        vm.createContext(mimic);
-        mimic.postMessage = definePostMessage(mimic,comp,attrs);
-        vm.runInContext(r20.init(mimic,eval,_),mimic);
+        //initialize r20 context
+        this.context.postMessage = postMessage(this,comp,translations);
+        vm.runInContext(r20.init(this.context,eval,_),this.context);
+        getElementAttrs(this.context.document,this.attrs);
+        loadTranslations(this.context,translations);
+        registerEventListeners(this.context);
+        registerRepsecContainers(this.context,this.repeatingSections);
 
-        //subtasks
-        attrs["character_name"] = "Character Name";
-        mancer.data = {};
-        getElementAttrs(mimic.document,attrs);
-        loadTranslations(translations);
-        registerEventListeners();
-        registerRepsecContainers();
-
-        return mimic;
+        this.context.mimic = testEnvironment(this.context);
+        return this.context;
     }
 
-    static close() {
-        Object.keys(attrs).forEach(k=>delete attrs[k]);
-        Object.keys(mancer.data).forEach(k=>delete mancer.data[k]);
-        //delete mimic;
+    close() {
+        Object.keys(this.attrs).forEach(k=>delete attrs[k]);
+        Object.keys(this.mancer.pages).forEach(k=>delete mancer.pages[k]);
+        //delete context;
     }
     constructor(dom, comp, translations) {
         return this.open(dom, comp, translations);

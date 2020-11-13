@@ -58,40 +58,62 @@ mimic does not and will never have built-in support for drag'n'drop functionalit
 1. Run the following command: `npm install . -g`
 1. Run `mimic $YOUR_DIRECTORY`
 
-Additionally, you can specify which files to track by typing their names. By default, mimic will scrape the directory for you.
+Additionally, you can specify which files to track by typing their names. By default, mimic will scrape the directory for you. By default, the order of exeuction of the scraped files is not guaranteed. If you need to run scripts in order, specify them in the required order on the command line.
 
 mimic will read your `sheet.json` and scan your directory for HTML and translation files. Additionally, it will search for the relevant compendium cache.
 
-I recommend running [pug](https://pugjs.org/api/getting-started.html) to generate HTML, [sass](https://sass-lang.com/) to generate CSS, and mimic to test JavaScript.
+I recommend simultaneously running [pug](https://pugjs.org/api/getting-started.html) to generate HTML, [sass](https://sass-lang.com/) to generate CSS, and mimic to test JavaScript.
 
 ### command line options
 * `--watch` - Watch for changes
 * `--verbose`/`-v` - Print additional logs - useful for debugging the `mimic` environment
 * `--scrape $USERNAME $PASSWORD $COMPENDIUM_NAME` -- This will run a [simple webscraper.](#scraping)
 * `--comp=$COMPENDIUM_NAME` - Manually sets the compendium.
+* `--noimg` - Supress the startup graphic
 
 ### the `mimic` object: testing, debugging, and DOM manipulation
 Testing with mimic is as easy as using the `mimic` object to call functions. No additional includes or definitions necessary.
 
-I recommend adding a `test.js` file to your workspace so you can run unit tests on your sheet. For example, you might want to check that all your action buttons are working properly. Use the in-built DOM functionality to pass MouseEvents to all your action buttons!
+I recommend adding a `test.js` file to your workspace so you can run unit tests on your sheet. The `mimic` object has a number of in-built functions to
+facilitate quick and easy unit testing.
 
+If you need more advanced control, no worries! You have direct access to `_` as well as `dom`, `document`, and `window` using the typical (jsdom) syntax.
+
+Events passed to mimic take the following structure:
 ```js
-//TODO: update this when the mimic object is real :)
-
-console.log("TESTING SHEET CLICK EVENTS...");
-dom.window.document.querySelectorAll("[type=action]").forEach((node)=>{node.dispatchEvent(new dom.window.MouseEvent("click"));});
-
-console.log("TESTING CHARACTERMANCER CLICK EVENTS...");
-startCharactermancer("welcome");
-for (i in mancerPages) {
-    changeCharmancerPage(mancerPages[i], ()=>{
-        dom.window.document.querySelectorAll("[type=action]").forEach((node)=>{node.dispatchEvent(new dom.window.MouseEvent("click"));});
-    });
+event = {
+    eventname: "name of the triggered event",
+    mancer: "page|mancer|finish|cancel",
+    oattr: "turns into info.sourceAttribute",
+    sourcetype: "player|worker",
+    //the below are optional:
+    currentstep: "The current charactermancer step.",
+    previous_value: "previous value (for updating attrs)",
+    updated_value: "the new value (for updating attrs)",
+    removed_info: "unused",
+    triggerType: "unused",
+    sourceSection: "the containing repeating section",
 }
-finishCharactermancer();
 ```
 
-Although mimic uses Node's `vm` environment to run sheet scripts, debugging with mimic is straightforward. Simply place the keyword `debugger;` wherever you need a sheet script to break. Note that placing breakpoints in your IDE will not work: you must manually type in the breakpoint.
+...And here is an example of the API in action:
+```js
+mimic.triggerEvent("sheet:opened");
+mimic.enqueueEvent({
+  eventname: "clicked:button",
+  mancer: false,
+  oattr: "some_class",
+  sourcetype: "player"
+});
+mimic.addRepeatingSections("inventory");
+mimic.updateEvents();
+```
+
+Although mimic uses Node's `vm` environment to run sheet scripts, debugging with mimic is relatively straightforward. Simply place the keyword `debugger;` wherever you need a sheet script to break.
+
+#### API
+//TODO: FLESH THIS OUT
+
 
 ### compendium scraping
 Running `mimic --scrape` will download all the pages for the passed compendium. It uses [nightmarejs](http://www.nightmarejs.org/) to log you into Roll20 and manually scrapes the relevant pages. The scraped files will be saved in a cache in your install directory. Don't lose it!

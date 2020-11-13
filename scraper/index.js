@@ -111,12 +111,5 @@ exports.scrape = async function (email, pass, comp_name, id_map = [], cache_dir 
         console.log("Unable to scrape compendium!")
         console.error(error);
     }
-
-    try {
-        fs.writeFile(cache_dir+"id_map.json",JSON.stringify(id_map),()=>{console.log("wrote",cache_dir+"id_map.json")});
-    }
-    catch(e) {
-        console.warn("Unable to cache id_map!",e);
-    }
     return id_map;
 }

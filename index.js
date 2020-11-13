@@ -29,7 +29,7 @@ let dom = {};
 //global variables
 const comp = [];
 const scripts = {};
-const watched = [];
+const watched = {}; //name: fullname
 const translations = {};
 let HTMLname = "";
 let comp_name = "";
@@ -152,11 +152,11 @@ async function runScripts() {
             dom = new JSDOM(``, jsdomOptions);
         }
 
-        const mimic = new Mimic(dom, comp, translations);
+        let mimic = new Mimic(dom, comp, translations);
         for (i in scripts) {
             vm.runInContext(scripts[i],mimic,i);
         }
-        Mimic.close();
+        delete mimic;
     }
     catch (e) {
         log("ERROR:",e);
@@ -202,8 +202,7 @@ async function loadFile(dirent, directory) {
         else if (name.substring(name.length-3) === ".js") {
             if (scripts[name]) delete scripts[name];
             scripts[name] = fs.readFileSync(fullname);
-            if (!watched[fullname])
-                watched.push(fullname);
+            watched[name] = fullname;
         }
         else if (name == "sheet.json") {
             let json = fs.readFileSync(fullname);
@@ -214,10 +213,7 @@ async function loadFile(dirent, directory) {
                 HTMLname =  (directory + "/" + data.html).replace(/\/+/gi,'/');
                 comp_name = comp_name || data.compendium;
                 if (HTMLnameprev != HTMLname) {
-                    if (HTMLnameprev)
-                        watched.replace(HTMLnameprev,HTMLname);
-                    else
-                        watched.push(HTMLname);
+                    watched["html"] = HTMLname;
                     await loadHTML();
                 }
                 if (comp_name_prev != comp_name) {
@@ -225,7 +221,7 @@ async function loadFile(dirent, directory) {
                 }
             }
             catch(e) {log("Error parsing sheet.json:",e);}
-            watched.push(fullname);
+            watched[name] = fullname;
         }
         else if (name.substring(name.length-5) === ".json") {
             let json = fs.readFileSync(fullname);
@@ -233,7 +229,7 @@ async function loadFile(dirent, directory) {
                 translations[name.substring(0,name.length-5)] = JSON.parse(json.toString());
             }
             catch(e) {log("Error parsing translations.json:",e);}
-            watched.push(fullname);
+            watched[name] = fullname;
         }
     }
     catch (e) {
