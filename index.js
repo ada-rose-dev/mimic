@@ -4,7 +4,7 @@
 //-- created by phoenix ada rose mandala for roll20 user collaboration
 //--
 let mimic_img_64 = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
-let mimic_img_32 = "     ■■■■■■■■■■■■■■■            \n   ■■~~~~~~~~     ~~■■■■■       \n  ■~~~~~~~~  ■■■■■  ~~~~ ■■     \n ■~~~~~~~~ ■■     ■■ ~~~~~ ■■   \n ■■■■■■~~~ ■■■   ■■■ ~~~~~~~ ■  \n //  ■■■■■■~~~~~~~~~~~~~~~~~~   \n/  \\\\  \\\\  \\\\   \\\\  ■■■■■■■■■■  \n    \\   \\    \\    \\    \\\\    \\\\ \n \\    /    /        /    \\/   /\\\n \\\\  //  // /****\\ //   //  //  \n ■■■■■■■■  | *****\\     ~~~■■   \n ■■~~~~~~  | *******\\/*\\ ~~■■   \n ■■~~~~~~~~  \\ ********/\\ ~~~■■ \n  ■■ ~~~~~~~~  \\ ****   /\\ ~~■■ \n  ■■~~~~~~~~~~~      ~ | *|     \n  ■■■■■■■■■■            --      ";
+let mimic_img_32 = "       _.====~~~~===.._            \n    == ~~~~~~     ~~~ ===.       \n  = ~~~~~~~ ,■■■■■, ~~~~ ==.     \n = ~~~~~~~ ■■   . ■■ ~~~~~ ==.   \n ====.~~~~ ,■■   ■■, ~~~~~~~ =  \n //  `==== ~~~~~~~~~~~~~~~~~ .\n/   //  \\\\  \\\\   \\\\ `==========  \n   /      \\    \\   \\    \\\\   \\\\ \n \\    /    /        /    /\\  / \\\n \\\\  //  // /.***\\ //   //  //  \n ========= | .****\\ ~~~~~~~ =   \n = ~~~~~~~ | .******\\,** ~~ =.  \n = ~~~~~~~~ \\ .******/ ||~~~ = \n `= ~~~~~~~~~ \\ .***/  /\\ ~~ = \n  = ~~~~~~~~~~~~~~~~~ | *| ===\n  ============``       --      \n";
 let title = "MIMIC v0.01";
 
 //-- requires
@@ -15,13 +15,14 @@ const vm = require('vm');
 
 //custom
 const scraper = require('scraper');
-const {Mimic, log} = require('./modules/initializer');
+const {Mimic, log} = require('./modules/mimic');
 
 //external
 const jsdom = require('jsdom');
+console.log(title);
 log("Starting up...");
 const virtualConsole = new jsdom.VirtualConsole();
-virtualConsole.sendTo(console);
+virtualConsole.sendTo(log);
 const {JSDOM} = jsdom;
 let jsdomOptions = {virtualConsole}
 let dom = {};
@@ -46,6 +47,7 @@ let verbose = false;
     let watch;
     let scrape;
     let filenames = [];
+    let mimic_img = mimic_img_32;
 
     //parse argvs
     for (let i = 0; i < process.argv.length; ++i) {
@@ -88,8 +90,7 @@ let verbose = false;
         }
     }
 
-    console.log(mimic_img_32);
-    console.log(title);
+    if (mimic_img) console.log(mimic_img);
 
     //route
     if (scrape) {

@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\index.js",
-            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/", "--watch", "--noimg"]
+            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/", "--watch"]
         },
         {
             "type": "node",

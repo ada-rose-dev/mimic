@@ -35,7 +35,7 @@ function registerEventListeners(mimic){
                 let message = {
                     eventname: name,
                     triggerType: "player",
-                    oattr: node,
+                    oattr: name.replace("clicked:",""),
                     type: "act",
                     data: node.getAttribute("value")
                 };
@@ -131,7 +131,6 @@ class Mimic {
         //initialize vm context (this is sensitive, don't try to rearrange it)
         this.context = {
             _: _,
-            console: console,
             dom: dom,
             window: dom.window,
             document: dom.window.document

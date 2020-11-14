@@ -54,7 +54,25 @@ const typeMap = {
     "getcompendiumpage":"attrreqfulfilled",
     "getcompendiumquery":"attrreqfulfilled",
     "loadTranslationStrings":"loadTranslationStrings",
+    "act": "act",
+    "startcharactermancer": "startcharactermancer",
+    "finishcharactermancer": "finishcharactermancer"
 };
+
+//- helpers
+function findRepeatingSection(mimic, sectionName, propertyName, valueToMatch) {
+    let repeatingSections = mimic.repeatingSections;
+    for (let i in repeatingSections) {
+        if (repeatingSections[i].id == sectionName) {
+            let repsecs = repeatingSections[i].repsecs;
+            for (let j in repsecs) {
+                if (repsecs[j][propertyName] == valueToMatch) {
+                    return repsecs[j];
+                }
+            }
+        }
+    }
+}
 
 //-- Message Handling
 function postMessage(mimic,comp,translations) {
@@ -95,7 +113,6 @@ function postMessage(mimic,comp,translations) {
     
             triggerevents.push({
                 sourceSection: message.sourceSection || '',
-                oattr: message.oattr || '',
                 eventname: page,
                 sourcetype: "worker"
             });
@@ -104,7 +121,6 @@ function postMessage(mimic,comp,translations) {
         finishcharactermancer: (mimic, message, request, triggerevents) => {
             triggerevents.push({
                 sourceSection: message.sourceSection || '',
-                oattr: message.oattr || '',
                 sourcetype: "worker",
                 mancer: "finish",
                 eventname: message.data || "",
@@ -179,8 +195,8 @@ function postMessage(mimic,comp,translations) {
         setattrs: (mimic, message, request, triggerevents) => {
             let data = message.data;
             let prefix = mimic.mancer.active ? "comp_" : "attr_";
-            let attrCache = mimic.mancer.active ? mimic.mancer.pages[mancer.current_page].data : mimic.attrs;
             let mancer = mimic.mancer;
+            let attrCache = mancer.active? mimic.mancer.pages[mancer.current_page].data : mimic.attrs;
 
             if (mancer.active) {
                 request.type = "setCharmancerData";
@@ -190,23 +206,64 @@ function postMessage(mimic,comp,translations) {
                 mimic.context._charmancerData = mimic.mancer.pages;
             }
     
-            for (i in data) {
-                attrCache[i] = data[i];
-                let found = mimic.context.document.querySelectorAll(`[name=${prefix}${i}]`);
-    
+            for (let dataProperty in data) {
+                let previous_value;
+                let parent = mimic.context.document;
+                let attrName = dataProperty;
+                let oattr = dataProperty;
+
+                if (dataProperty.search("repeating_") != -1) {
+                    let split = dataProperty.split("_");
+                    let sectionName, sectionID;
+
+                    if (split.length <= 3) {
+                        attrName = split[2];
+                        if (message.repeatingfield) {
+                            split = message.repeatingfield.split("_");
+                            sectionName = split[1];
+                            sectionID = split[2];
+                            oattr = message.repeatingfield + attrName;
+                        }
+                        else
+                        {
+                            log("Warning: Trying to set repeating attribute outside of repeating section!",message);
+                            break;
+                        }
+
+                    }
+                    else {
+                        attrName = split.splice(3, split.length).join("_");
+                        sectionName = split[1];
+                        sectionID = split[2];
+                    }
+
+                    let repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
+                    let repeatingCache = repsec.attrs;
+                    parent = repsec.element;
+                    previous_value = repeatingCache[dataProperty] || null;
+                    repeatingCache[attrName] = data[dataProperty];
+                }
+                else {
+                    previous_value = attrCache[dataProperty] || null;
+                    attrCache[dataProperty] = data[dataProperty];
+                }
+
+                let found = parent.querySelectorAll(`[name=${prefix+attrName}]`);
                 found.forEach((node)=>{
-                    node.setAttribute("value",i);
-                    if (verbose)
-                        log("HTML node updated",node.outerHTML);
+                    node.setAttribute("value",data[dataProperty]);
+                    log("HTML node updated",node.outerHTML);
                 })
+                if (found.length == 0) {
+                    console.warn("Unable to find an HTML element for passed attribute: ",dataProperty);
+                }
     
                 if (!message.options || !message.options.silent) {
                     triggerevents.push({
-                        previous_value : attrCache[i],
-                        updated_value : data[i],
-                        sourceSection : message.sourceSection || '',
-                        oattr : message.oattr || '',
-                        eventname : `${i}`,
+                        previous_value : previous_value,
+                        updated_value : data[dataProperty],
+                        sourceSection : message.sourceSection,
+                        oattr : dataProperty,
+                        eventname : dataProperty,
                         sourcetype : "worker",
                         mancer: mimic.mancer.active ? "mancerchange" : ""
                     });
@@ -216,30 +273,30 @@ function postMessage(mimic,comp,translations) {
         },
         attrreq: (mimic, message, request, triggerevents) => {
             request.data = {};
-            let attrreq = message.data;
-            if (Array.isArray(attrreq)) {
-                for (i in attrreq) {
-                    let attr = attrreq[i];
-                    if (attr.includes("repeating_")) {
-                        let split = attr.split("_");
-                        let sectionName = split[1];
-                        let sectionID = split[2];
-                        let parsedAttr = attr.replace(`repeating_${sectionName}_${sectionID}_`,"");
-                        let repeatingSections = mimic.repeatingSections;
-                        for (let j in repeatingSections) {
-                            if (repeatingSections[j].id == sectionName) {
-                                for (let k in repeatingSections[j].repsecs) {
-                                    let repsec = repeatingSections[j].repsecs[k];
-                                    if (repsec.id == sectionID) {
-                                        request.data[attr] = repsec.attrs[parsedAttr];
-                                    }
-                                }
-                            }
-                        }
+            let attrreq = Array.isArray(message.data) ? message.data : [message.data];
+            for (i in attrreq) {
+                let attr = attrreq[i];
+                if (attr.includes("repeating_")) {
+                    let split = attr.split("_");
+                    let sectionName, sectionID, attrName, repsec;
+
+                    if(split.length > 3) {
+                        attrName = split.splice(3, split.length).join("_");
+                        sectionName = split[1];
+                        sectionID = split[2];
+                        repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
                     }
                     else {
-                        request.data[attr] = mimic.attrs[attr];
+                        attrName = split[2];
+                        sectionName = split[1];
+                        sectionID = mimic._activeRepeatingField;
+                        repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
+                        if (!repsec) {console.warn("Trying to get repeating value with no repeating section specified!"); continue;}
                     }
+                    request.data[attr] = repsec.attrs[attrName];
+                }
+                else {
+                    request.data[attr] = mimic.attrs[attr];
                 }
             }
             return {request: request, triggerevents: triggerevents};
@@ -276,7 +333,14 @@ function postMessage(mimic,comp,translations) {
         if (verbose) {
             log(`message: ${message.type}`,message);
         }
-        let response = handler[message.type](mimic,message,request,[]);
+        let response;
+        if (typeMap[message.type]) {
+            response = handler[message.type](mimic,message,request,[]);
+        }
+        else {
+            console.warn(`Unimplemented message type! ${message.type}`);
+            return;
+        }
         
         mimic.context.messageHandler({data: response.request});
         for (let i in response.triggerevents) {

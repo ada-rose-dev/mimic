@@ -1,8 +1,9 @@
 module.exports = function testEnvironment(context) {
     return {
         events: [],
+        log: context.log,
 
-        newEventType(type,...params) {
+        domEvent(type,...params) {
             return new context.dom.window[type](...params);
         },
 
@@ -35,7 +36,7 @@ module.exports = function testEnvironment(context) {
             context.trigger(event);
         },
         addRepeatingSections(id = ""){
-            context.document.querySelectorAll(".btn.repcontrol_add").forEach((element)=>{element.dispatchEvent(this.newEventType("MouseEvent","click"));});
+            context.document.querySelectorAll(".btn.repcontrol_add").forEach((element)=>{element.dispatchEvent(this.domEvent("MouseEvent","click"));});
         }
     };
 }
