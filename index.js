@@ -5,27 +5,15 @@
 //--
 let mimic_img_64 = "                        yy■■■■■■■■■■■■■■yy                      \n                   yy■■yyyyyyyyyyyyyyyyyyyy■■■■y                \n              ■■yyyyyyyyyy          yyyyyyyyyyyy■■■■y           \n          ■■■■yyyyyyyyyy  ■■■■■■■■■■  yyyyyyyyyyyyyy■■y        \n       y■■yyyyyyyyyyyy  ■■■■      ■■■■  yyyyyyyyyyyyyy■■        \n     y■■yyyyyyyyyyyy  ■■■■          ■■■■  yyyyyyyyyyyyyy■■      \n    ■■yyyyyyyyyyyyyy  ■■■■■■      ■■■■■■  yyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyy  ■■■■■■■■■■■■    yyyyyyyyyyyyyyyy■■      \n  ■■yyyyyyyyyyyyyyyyyyyy                            yyyyyy      \n  ■■yyyyyyyyyyyyyyyy        ■■■■  ■■■■■■■■yy  ■■■■■■    yyyy    \n    ■■yyyyyyyy      ■■  ■■yy■■■■  ■■yy■■■■    ■■yy■■  yy        \n    yyyy      ■■■■■■    ■■yy■■■■    ■■■■        ■■■■  yy        \n    yy  yy■■■■yy■■■■      ■■yy■■    ■■    ■■    ■■              \n  yy  ■■■■  ■■yy■■          ■■          ■■■■        ■■          \n      ■■      ■■      ■■                ■■■■■■      ■■■■        \n          ■■  ■■    ■■■■                ■■yy■■    ■■yy■■yy      \n          ■■      ■■■■yy■■  ■■  yyyy  yy■■yyyy  ■■yyyy■■  yyyy  \n          ■■■■  ■■■■■■yy  ■■  yy■■■■yy                    yy    \n          ■■yy■■■■■■yy    ■■  yy■■■■■■    yyyyyyyyyyyyyyyyyy    \n        yy■■■■        yyyy  ■■  ■■■■■■■■  yyyyyyyyyyyyyyyy■■    \n              yyyyyyyyyyyyyy  ■■yy■■■■■■  yyyy    yyyyyyyy■■    \n        yyyyyyyyyyyyyyyyyyyy  ■■  yy■■■■■■    ■■■■  yyyy■■      \n      yyyy■■■■yyyyyyyyyyyyyyyy  ■■  yy■■■■■■■■  yy■■  yy■■      \n            ■■■■yyyyyyyyyyyyyyyy  ■■  yyyyyy  ■■        ■■      \n              ■■yyyyyyyyyyyyyyyyyy  ■■      ■■    ■■  ■■■■      \n              ■■yyyyyyyyyy            ■■■■■■      ■■      ■■    \n                ■■yyyy    ■■■■■■■■■■            ■■  yy          \n                ■■yy  ■■■■                      ■■yyyy          \n                ■■  ■■                          ■■yyyy          \n                ■■■■                              ■■            \n              ■■                                                ";
 let mimic_img_32 = "       _.====~~~~===.._            \n    == ~~~~~~     ~~~ ===.       \n  = ~~~~~~~ ,■■■■■, ~~~~ ==.     \n = ~~~~~~~ ■■   . ■■ ~~~~~ ==.   \n ====.~~~~ ,■■   ■■, ~~~~~~~ =  \n //  `==== ~~~~~~~~~~~~~~~~~ .\n/   //  \\\\  \\\\   \\\\ `==========  \n   /      \\    \\   \\    \\\\   \\\\ \n \\    /    /        /    /\\  / \\\n \\\\  //  // /.***\\ //   //  //  \n ========= | .****\\ ~~~~~~~ =   \n = ~~~~~~~ | .******\\,** ~~ =.  \n = ~~~~~~~~ \\ .******/ ||~~~ = \n `= ~~~~~~~~~ \\ .***/  /\\ ~~ = \n  = ~~~~~~~~~~~~~~~~~ | *| ===\n  ============``       --      \n";
-let title = "MIMIC v0.01";
-
+console.log("MIMIC v0.01\nStarting up...");
 //-- requires
 //nodejs
 const fs = require('fs');
 const process = require('process');
-const vm = require('vm');
 
 //custom
 const scraper = require('scraper');
-const {Mimic, log} = require('./modules/mimic');
-
-//external
-const jsdom = require('jsdom');
-console.log(title);
-log("Starting up...");
-const virtualConsole = new jsdom.VirtualConsole();
-virtualConsole.sendTo(log);
-const {JSDOM} = jsdom;
-let jsdomOptions = {virtualConsole}
-let dom = {};
+const mimic = require('./modules/mimic');
 
 //global variables
 const comp = [];
@@ -35,12 +23,13 @@ const translations = {};
 let HTMLname = "";
 let comp_name = "";
 let verbose = false;
+let cwd = "";
 
 //-- boot
 (boot = () => {
     //cull node call and directory
     process.argv.shift();
-    process.argv.shift();
+    cwd = process.argv.shift().replace("index.js","");
 
     //define variables
     let target_dir;
@@ -127,12 +116,6 @@ async function mainLoop(directory,filenames,watch) {
         for (let i in watched) {
             fs.watch(watched[i], {persistent: true, interval: 1000}, (event, filename)=>{
                 if (waiting) return;
-                if (HTMLname.search(filename) != -1) loadHTML();
-                else {
-                    let f = watched[i];
-                    let j = watched[i].lastIndexOf('/')+1;
-                    loadFile(f.substring(j),f.substring(0,j));
-                }
                 runScripts();
 
                 waiting = true;
@@ -148,31 +131,19 @@ async function runScripts() {
     }
     log("Running scripts...");
     try {
-        if (!dom) {
-            log("NOTE: Running with empty DOM");
-            dom = new JSDOM(``, jsdomOptions);
+        await mimic.open(cwd,HTMLname,comp,translations,verbose);
+        for (let i in scripts) {
+            mimic.run(scripts[i],i);
         }
-
-        let mimic = new Mimic(dom, comp, translations);
-        for (i in scripts) {
-            vm.runInContext(scripts[i],mimic,i);
-        }
-        delete mimic;
+        mimic.close();
     }
     catch (e) {
-        log("ERROR:",e);
+        log("MIMIC: ERROR RUNNING SCRIPT:",e);
+        debugger;
     }
 }
 
 //-- Asset loading
-async function loadHTML() {
-    log("Parsing HTML...");
-    let file = fs.readFileSync(HTMLname);
-    let parsed = file.toString().replace(/<script.+>(\n|.)*<\/script>/gi,""); //strip scripts
-    if (dom.window) dom.window.close();
-    delete dom;
-    dom = new JSDOM(parsed, jsdomOptions);
-}
 async function loadCompendium(name) {
     log(`Loading data for ${name} compendium...`)
     try {
@@ -201,8 +172,8 @@ async function loadFile(dirent, directory) {
             Object.assign(scripts,loadFiles(fullname));
         }
         else if (name.substring(name.length-3) === ".js") {
-            if (scripts[name]) delete scripts[name];
-            scripts[name] = fs.readFileSync(fullname);
+            if (scripts[fullname]) delete scripts[fullname];
+            scripts[fullname] = fs.readFileSync(fullname);
             watched[name] = fullname;
         }
         else if (name == "sheet.json") {
@@ -215,7 +186,6 @@ async function loadFile(dirent, directory) {
                 comp_name = comp_name || data.compendium;
                 if (HTMLnameprev != HTMLname) {
                     watched["html"] = HTMLname;
-                    await loadHTML();
                 }
                 if (comp_name_prev != comp_name) {
                     await loadCompendium(comp_name);
@@ -254,4 +224,33 @@ async function loadFiles(directory, filenames = []) {
     for (i in filenames) {
         loadFile(filenames[i], directory);
     }
+}
+
+//-- Helpers
+function log(...params) {
+    for (let i in params) {
+        if (typeof(params[i]) === "string") {
+            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
+        }
+        else if (typeof(params[i] === "object")) {
+            let newparams = [params[i], `\x1b[0m`];
+            params.splice(i,0,newparams);
+            params[i] = `\x1b[2m\x1B[35m`
+        }
+        else if (typeof(params[i] === "array")) {
+            let newparams = [params[i], `\x1b[0m`];
+            params.splice(i,0,newparams);
+            params[i] = `\x1b[2m\x1B[36m`
+        }
+        else if (typeof(params[i] === "number")) {
+            params[i] = `\x1B[37m${params[i]}\x1b[0m`;
+        }
+    }
+    if (params.length > 1) {
+        console.log(params[0]);
+        console.groupCollapsed("...");
+        console.log(...params);
+        console.groupEnd();
+    }
+    else console.log(...params);
 }

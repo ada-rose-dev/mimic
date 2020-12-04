@@ -1,0 +1,41 @@
+mixin test-suite() 
+    .inputs
+        span(name="comp_span")
+        input(type="hidden" name="comp_hidden" value="true")
+        input(type="checkbox" name="comp_checkbox")
+        input(type="text" name="comp_textInput")
+        input(type="radio" name="comp_radioInput")
+        input(type="text" name="comp_required" required)
+    .selects
+        select(name="comp_select").mancer-select
+    .buttons
+        button(type="action" name="act_button")
+        button(type="action" name="act_startMancer")
+        button(type="submit")
+        button(type="back")
+        button(type="cancel")
+        button(type="finish")
+    .mancer-specific
+        select(name="comp_accept" accept="Category:Races")
+        .choice.example
+        p.to-be-modified
+    
+
+charmancer.sheet-repeating-type1
+    +test-suite()
+charmancer.sheet-repeating-type2
+    +test-suite()
+
+charmancer.sheet-charmancer-slide1
+    +test-suite()
+    .repeating
+        //add repeating section in test.js
+    .iframe
+
+charmancer.sheet-charmancer-slide2
+    +test-suite()
+    .repeating
+        //add repeating section in test.js
+    .iframe
+
+charmancer.sheet-charmancer-final

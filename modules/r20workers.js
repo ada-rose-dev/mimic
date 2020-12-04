@@ -1,4 +1,4 @@
-exports.init = function (self, globalEval, globalUnderscore) {
+function initR20(self, globalEval, globalUnderscore) {
     "use strict";
 
     self._ = globalUnderscore;
@@ -584,8 +584,8 @@ exports.init = function (self, globalEval, globalUnderscore) {
             console.log("Character Sheet Error: Trying to start the Charactermancer when no character is active in sandbox.");
             return;
         }
-        delete _charmancerData[_activeCharacterId].undefined;
-        return _charmancerData[_activeCharacterId];
+        //delete self._charmancerData[_activeCharacterId].undefined;
+        return self._charmancerData[_activeCharacterId];
     };
 
     self.deleteCharmancerData = function(pages, callback) {
@@ -671,11 +671,6 @@ exports.init = function (self, globalEval, globalUnderscore) {
         }
     };
 
-    //custom event for test handling - must not be passed into final sheet!
-    var endTest = function() {
-
-    }
-
     console.log("Starting up WEB WORKER");
 
     var postMessage   = self.postMessage,
@@ -746,4 +741,5 @@ exports.init = function (self, globalEval, globalUnderscore) {
 
     self.window = self; // provide a window object for scripts
 
-}; //(self,eval,_)
+
+};

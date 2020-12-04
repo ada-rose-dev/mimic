@@ -9,10 +9,13 @@
             "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
-                "<node_internals>/**"
+                "<node_internals>/**",
+                "./node_modules/**"
             ],
             "program": "${workspaceFolder}\\index.js",
-            "args": ["C:/dev/contract/roll20-private-sheets/Starfinder by Roll20/", "--watch"]
+            "args": [
+                "C:/dev/contract/untracked/mimic/test/"
+            ]
         },
         {
             "type": "node",

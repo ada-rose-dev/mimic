@@ -14,6 +14,7 @@
   },
   "module": "r20",
   "dependencies": {
+    "eval-module": "^1.0.2",
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
     "scraper": "file:scraper",

@@ -1,0 +1,17 @@
+mixin test-suite() 
+    .inputs
+        span(name="attr_span")
+        input(type="hidden" name="attr_hidden" value="true")
+        input(type="checkbox" name="attr_checkbox")
+        input(type="text" name="attr_textInput")
+        input(type="radio" name="attr_radioInput")
+    .buttons
+        button(type="action" name="act_button")
+        button(type="action" name="act_startMancer")
+
+.test-sheet-container
+    +test-suite
+    fieldset.repeating_type1
+        +test-suite
+    fieldset.repeating_type2
+        +test-suite

@@ -1,214 +1,144 @@
-//- class defs
-"use strict"
+//console.log("loading message handler...");
+function definePostMessage(self,comp) {
+    "use strict"
+    let mancer = self.mancer;
+    let repeatingSections = self.repeatingSections;
+    let attrs = self.attrs;
+    let verbose = self.verbose;
 
-//-- Helpers
-function log(...params) {
-    for (let i in params) {
-        if (typeof(params[i]) === "string") {
-            params[i] = `\x1b[33m${params[i]}\x1b[0m`;
-        }
-        else if (typeof(params[i] === "object")) {
-            let newparams = [params[i], `\x1b[0m`];
-            params.splice(i,0,newparams);
-            params[i] = `\x1b[2m\x1B[35m`
-        }
-        else if (typeof(params[i] === "array")) {
-            let newparams = [params[i], `\x1b[0m`];
-            params.splice(i,0,newparams);
-            params[i] = `\x1b[2m\x1B[36m`
-        }
-        else if (typeof(params[i] === "number")) {
-            params[i] = `\x1B[37m${params[i]}\x1b[0m`;
-        }
-    }
-    if (params.length > 1) {
-        console.log(params[0]);
-        console.groupCollapsed("...");
-        console.log(...params);
-        console.groupEnd();
-    }
-    else console.log(...params);
-}
-class RepeatingSection {
-    constructor(id, element, attrs = {}) {
-        this.id = id;                       
-        this.element = element;
-        this.attrs = attrs || getElementAttrs(element,this.attrs);
-    }
-}
-class RepeatingData {
-    constructor(id, fieldset, repcontainer, repsecs = []) {
-        this.id = id;                       //string
-        this.fieldset = fieldset;           //element
-        this.repcontainer = repcontainer;   //element
-        this.repsecs = repsecs;             //array of respec's
-    }
-}
-const verbose = false;
-const typeMap = {
-    "eval": "eval",
-    "trigger":"trigger",
-    "attrreq":"attrreqfulfilled",
-    "attrlist":"attrlistreqfulfilled",
-    "setattrs":"setattrreqfulfilled",
-    "getcompendiumpage":"attrreqfulfilled",
-    "getcompendiumquery":"attrreqfulfilled",
-    "loadTranslationStrings":"loadTranslationStrings",
-    "act": "act",
-    "startcharactermancer": "startcharactermancer",
-    "finishcharactermancer": "finishcharactermancer"
-};
+    const typeMap = {
+    
+        // ATTRS
+        "attrreq":"attrreqfulfilled",
+        "attrlist":"attrlistreqfulfilled",
+        "setattrs":"setattrreqfulfilled",
+    
+        // COMPENDIUM
+        "changecompendiumpage": "attrreqfulfilled", //TODO
+        "getcompendiumpage":"attrreqfulfilled",
+        "getcompendiumquery":"attrreqfulfilled",
+    
+        // MANCER
+        "startcharactermancer": "attrreqfulfilled",
+        "finishcharactermancer": "attrreqfulfilled",
+        "setcharmancertext": "attrreqfulfilled",
+        "setcharmanceroptions": "attrreqfulfilled",
+        "deletecharmancerdata": "attrreqfulfilled",
+        "disablecharmanceroptions": "attrreqfulfilled",
+        "showchoices": "attrreqfulfilled",
+        "hidechoices": "attrreqfulfilled",
+        "changecharmancerpage": "attrreqfulfilled",
+        
+        // REPEATING
+        "removerepeatingrow": "attrreqfulfilled",
+        "addrepeatingsection": "attrreqfulfilled",
+        "getrepeatingsections": "attrreqfulfilled",
+        "clearrepeatingsections": "attrreqfulfilled",
+    
+        // MISC
+        "act": "act",
+        "eval": "eval",
+        "loadTranslationStrings":"loadTranslationStrings",
+        "trigger":"trigger",
+    };
 
-//- helpers
-function findRepeatingSection(mimic, sectionName, propertyName, valueToMatch) {
-    let repeatingSections = mimic.repeatingSections;
-    for (let i in repeatingSections) {
-        if (repeatingSections[i].id == sectionName) {
-            let repsecs = repeatingSections[i].repsecs;
-            for (let j in repsecs) {
-                if (repsecs[j][propertyName] == valueToMatch) {
-                    return repsecs[j];
-                }
-            }
-        }
-    }
-}
+    function compendiumSearch(queryString) {
+        let data = queryString,
+            query = {},
+            matched_pages = [];
 
-//-- Message Handling
-function postMessage(mimic,comp,translations) {
-    const handler = {
-        act: (mimic, message, request, triggerevents) => {
-            if (mimic.mancer.active) {
-                if (message.name = "act_finish") {
-                    message.mancer = "finish";
-                    mimic.mancer.current_page = "final";
-                }
-                if (message.name = "act_cancel") {
-                    message.mancer = "cancel";
-                }
-            }
-            triggerevents.push(message);
-    
-            return {request: request, triggerevents: triggerevents};
-        },
-        startcharactermancer: (mimic, message, request, triggerevents) => {
-            //load charmancer pages
-            mimic.context.document.querySelectorAll("charmancer[class*=sheet-charmancer-").forEach((node)=>{
-                let name = node.className.match(/sheet-charmancer-([^\s]+)/)[1];
-                mimic.mancer.pages[name] = {data: {}, values: {}};
-                //mancer.pages[name].getNode = ()=>{return contextobj.document.querySelectorAll("charmancer [name=sheet-charmancer-"+name+'-')};
-            });
-    
-            let page = "";
-            for (let i in mimic.mancer.pages) {
-                if (message.data == i) {page = i; break;}
-            }
-            if (!page) {
-                console.warn("mancer error: page \"",message.data,"\" not found!");
-                return {request: request, triggerevents: triggerevents};
-            }
-    
-            mimic.mancer.active = true;
-            mimic.mancer.current_page = message.data;
-    
-            triggerevents.push({
-                sourceSection: message.sourceSection || '',
-                eventname: page,
-                sourcetype: "worker"
-            });
-            return {request: request, triggerevents: triggerevents};
-        },
-        finishcharactermancer: (mimic, message, request, triggerevents) => {
-            triggerevents.push({
-                sourceSection: message.sourceSection || '',
-                sourcetype: "worker",
-                mancer: "finish",
-                eventname: message.data || "",
-                data: mimic.mancer.pages
-            })
-            mimic.mancer.current_page = "final";
-            mimic.mancer.active = false;
-            delete mimic.mancer.pages;
-            return {request: request, triggerevents: triggerevents};
-        },
-        getcompendiumpage: (mimic, message, request, triggerevents)=> {
-            if (comp) {
-                let arr = message.data;
-                if (typeof(message.data) == "string") {
-                    arr = [];
-                    arr.push(message.data);
-                }
-                request.data = {};
-                for (i in arr) {
-                    Object.assign(request.data,(comp[message.data].data));
-                    mimic.mancer.current_page = comp[message.data].data;
-                }
-            }
-            else
-                console.warn("Trying to get compendium page when no compendium has been set.");
-            return {request: request, triggerevents: triggerevents};
-        },
-        getcompendiumquery: (mimic, message, request, triggerevents)=> {
-            if (comp) {
-                let data = message.data[0],
-                    query = {},
-                    matched_pages = [];
-    
-                if (typeof(data) === "string") {
-                    data = data.split(" ");
-                }
-                for (i in data) {
-                    let obj = data[i].split(":");
-                    query[obj[0]] = new RegExp(obj[1],"i");    
-                }
-                try {
-                    for (i in comp) {
-                        let page = comp[i];
-                        matched = false;
-                        for (qkey in query) {
-                            for (dkey in page.data) {
-                                let val = page.data[dkey];
-                                let regex = query[qkey];
-                                if (dkey == qkey && val.match(regex)) {
-                                    matched = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (matched) {
-                            matched_pages.push(page.data);
-                        }
+        if (typeof(data) === "string") {
+            data = data.split(" ");
+        }
+        for (let i in data) {
+            let obj = data[i].split(":");
+            query[obj[0]] = decodeURI(obj[1]);
+        }
+        try {
+            for (let i in comp) {
+                let page = comp[i];
+                for (let qkey in query) {
+                    if (page.data[qkey]) {
+                        let val = page.data[qkey];
+                        if (val == (query[qkey]))
+                            matched_pages.push(page);
+                    }
+                    else {
+                        let val = page.data["Category"];
+                        if (val === qkey && page.name == (query[qkey]))
+                            matched_pages.push(page);
                     }
                 }
-                catch (e) {
-                    console.warn("unable to fetch compendium query: ",query);
-                    console.warn(e);
-                }
-    
-                request.data = matched_pages;
             }
-            else
-                console.warn("Trying to get compendium page when no compendium has been set.");
-                
-            return {request: request, triggerevents: triggerevents};
-        },
-        setattrs: (mimic, message, request, triggerevents) => {
+        }
+        catch (e) {
+            console.warn("unable to fetch compendium query: ",query);
+            console.warn(e);
+        }
+
+        return matched_pages;
+    }
+    function reverseHTMLescape(s) {
+            var entities = {
+                    ['&' + '#42' + ';']:'*',
+                    ['&' + 'amp' + ';']:'&',
+                    ['&' + 'lt' + ';']:'<',
+                    ['&' + 'gt' + ';']:'>',
+                    ['&' + '#39' + ';']:"'",
+                    ['&' + '#64' + ';']:'@',
+                    ['&' + '#123' + ';']:'{',
+                    ['&' + '#124' + ';']:'|',
+                    ['&' + '#125' + ';']:'}',
+                    ['&' + '#44' + ';']:',',
+                    ['&' + '#91' + ';']:'[',
+                    ['&' + '#93' + ';']:']',
+                    ['&' + 'quot' + ';']:'"',
+                    ['&' + '#58' + ';']:':',
+                    ['&' + '#40' + ';']:'(',
+                    ['&' + '#41' + ';']:')'
+                };
+            for (let i in entities) {
+                s = s.replace(new RegExp(i,"gi"), entities[i]);
+            }
+            return s;
+    }
+    function loadMancerPage(data) {
+        let page = "";
+        for (let i in mancer.pages) {
+            if (data == i) {page = i; break;}
+        }
+        if (page) {
+            mancer.current_page = page;
+            fillAcceptFields();
+        }
+        else {
+            console.warn("mancer error: page \"",data,"\" not found!");
+        }
+        return page;
+    }
+    function fillAcceptFields() {
+
+    }
+
+    const handler = {
+
+        // ATTRS [/]
+        setattrs: (message, request, triggerevents) => {
             let data = message.data;
-            let prefix = mimic.mancer.active ? "comp_" : "attr_";
-            let mancer = mimic.mancer;
-            let attrCache = mancer.active? mimic.mancer.pages[mancer.current_page].data : mimic.attrs;
+            let prefix = mancer.active ? "comp_" : "attr_";
+            let attrCache = mancer.active? mancer.pages[mancer.current_page].data : attrs;
 
             if (mancer.active) {
                 request.type = "setCharmancerData";
-                request.data = mimic.mancer.pages;
+                request.data = mancer.pages;
                 request.callback = {id: message.id, data:message.data}
                 request.character = message.characterid;
-                mimic.context._charmancerData = mimic.mancer.pages;
+                window._charmancerData = mancer.pages;
             }
     
             for (let dataProperty in data) {
                 let previous_value;
-                let parent = mimic.context.document;
+                let parent = document;
                 let attrName = dataProperty;
                 let oattr = dataProperty;
 
@@ -222,12 +152,12 @@ function postMessage(mimic,comp,translations) {
                             split = message.repeatingfield.split("_");
                             sectionName = split[1];
                             sectionID = split[2];
-                            oattr = message.repeatingfield + attrName;
+                            oattr = message.repeatingfield + '_' + attrName;
                         }
                         else
                         {
-                            log("Warning: Trying to set repeating attribute outside of repeating section!",message);
-                            break;
+                            log("SHEET WORKER ERROR: You attempted to set an attribute beginning with 'repeating_' but did not include a Row ID or Attribute Name in",attrName);
+                            continue;
                         }
 
                     }
@@ -237,11 +167,13 @@ function postMessage(mimic,comp,translations) {
                         sectionID = split[2];
                     }
 
-                    let repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
-                    let repeatingCache = repsec.attrs;
-                    parent = repsec.element;
-                    previous_value = repeatingCache[dataProperty] || null;
-                    repeatingCache[attrName] = data[dataProperty];
+                    let repsec = findRepeatingSection(repeatingSections,sectionName,"id",sectionID);
+                    if (repsec) {
+                        let repeatingCache = repsec.attrs;
+                        parent = repsec.element;
+                        previous_value = repeatingCache[dataProperty] || null;
+                        repeatingCache[attrName] = data[dataProperty];
+                    }
                 }
                 else {
                     previous_value = attrCache[dataProperty] || null;
@@ -250,8 +182,18 @@ function postMessage(mimic,comp,translations) {
 
                 let found = parent.querySelectorAll(`[name=${prefix+attrName}]`);
                 found.forEach((node)=>{
+                    //check if this is contained in a repeating section or fieldset
+                    let parent = node;
+                    while (parent) {
+                        if (parent.nodeName == "FIELDSET" || parent.nodeName == "CHARMANCER" || parent.className.includes("repcontainer")) {
+                            return;
+                        }
+                        parent = parent.parentElement;
+                    }
+
+                    let node_previousvalue = node.outerHTML;
                     node.setAttribute("value",data[dataProperty]);
-                    log("HTML node updated",node.outerHTML);
+                    log(`HTML node for <${prefix+attrName}> updated`,`\n${node_previousvalue} ==> ${node.outerHTML}`);
                 })
                 if (found.length == 0) {
                     console.warn("Unable to find an HTML element for passed attribute: ",dataProperty);
@@ -262,16 +204,16 @@ function postMessage(mimic,comp,translations) {
                         previous_value : previous_value,
                         updated_value : data[dataProperty],
                         sourceSection : message.sourceSection,
-                        oattr : dataProperty,
+                        oattr : oattr,
                         eventname : dataProperty,
                         sourcetype : "worker",
-                        mancer: mimic.mancer.active ? "mancerchange" : ""
+                        mancer: mancer.active ? "mancerchange" : ""
                     });
                 }
             }
             return {request: request, triggerevents: triggerevents};
         },
-        attrreq: (mimic, message, request, triggerevents) => {
+        attrreq: (message, request, triggerevents) => {
             request.data = {};
             let attrreq = Array.isArray(message.data) ? message.data : [message.data];
             for (i in attrreq) {
@@ -284,27 +226,27 @@ function postMessage(mimic,comp,translations) {
                         attrName = split.splice(3, split.length).join("_");
                         sectionName = split[1];
                         sectionID = split[2];
-                        repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
+                        repsec = findRepeatingSection(repeatingSectionssectionName,"id",sectionID);
+                        if (!repsec) continue;
                     }
                     else {
                         attrName = split[2];
                         sectionName = split[1];
-                        sectionID = mimic._activeRepeatingField;
-                        repsec = findRepeatingSection(mimic,sectionName,"id",sectionID);
+                        sectionID = _activeRepeatingField;
+                        repsec = findRepeatingSection(repeatingSectionssectionName,"id",sectionID);
                         if (!repsec) {console.warn("Trying to get repeating value with no repeating section specified!"); continue;}
                     }
                     request.data[attr] = repsec.attrs[attrName];
                 }
                 else {
-                    request.data[attr] = mimic.attrs[attr];
+                    request.data[attr] = attrs[attr];
                 }
             }
             return {request: request, triggerevents: triggerevents};
         },
-        attrlist: (mimic, message, request, triggerevents) => {
+        attrlist: (message, request, triggerevents) => {
             let sectionName = message.data.replace("repeating_","");
             let ids = [];
-            let repeatingSections = mimic.repeatingSections;
             for (let i in repeatingSections) {
                 if (repeatingSections[i].id == sectionName) {
                     let repsecs = repeatingSections[i].repsecs;
@@ -316,18 +258,301 @@ function postMessage(mimic,comp,translations) {
             request.data = ids;
             return {request: request, triggerevents: triggerevents};
         },
-        addrepeatingsection: (mimic, message, request, triggerevents) => {
-            //add charactermancer repeating section
-            message.target;
-            message.section;
-            message.name;
-        },
-        loadTranslationStrings: (mimic, message, request, triggerevents) => {
+
+        // COMPENDIUM [/]
+        changecompendiumpage: (message, request, triggerevents) => {
+            let page = compendiumSearch(message.data)[0];
+            mancer.current_compendium_page = page.name;
+            
+            let target_node = mancer.current_node.querySelector(`.sheet-${message.target}`);
+            target_node.innerHTML = reverseHTMLescape(page.cachedhtml);
+
+            fillAcceptFields();
+
             return {request: request, triggerevents: triggerevents};
-        }
+        },
+        getcompendiumpage: (message, request, triggerevents)=> {
+            if (comp) {
+                let arr = message.data;
+                if (typeof(message.data) == "string") {
+                    arr = [];
+                    arr.push(message.data);
+                }
+                request.data = {};
+                for (let i in arr) {
+                    Object.assign(request.data,compendiumSearch(arr[i]));
+                }
+            }
+            else
+                console.warn("Trying to get compendium page when no compendium has been set.");
+            return {request: request, triggerevents: triggerevents};
+        },
+        getcompendiumquery: (message, request, triggerevents)=> {
+            if (comp) {
+                request.data = compendiumSearch(message.data[0]);;
+            }
+            else
+                console.warn("Trying to get compendium page when no compendium has been set.");
+                
+            return {request: request, triggerevents: triggerevents};
+        },
+
+        // MANCER [-]
+        changecharmancerpage: (message, request, triggerevents) => {
+            let page = loadMancerPage(message.data);
+            triggerevents.push({
+                sourceSection: message.sourceSection || '',
+                mancer: "page",
+                eventname: page,
+                sourcetype: "worker"
+            });
+            return {request: request, triggerevents: triggerevents,};
+        },
+        deletecharmancerdata: (message, request, triggerevents) => {
+            if (message.data) {
+                for (let i in message.data) {
+                    if (mancer.pages[message.data[i]].data) delete mancer.pages[message.data[i]].data;
+                }
+            }
+            else {
+                for (let i in mancer.pages) {
+                    delete mancer.pages[i].data;
+                }
+            }
+            return {request: request, triggerevents: triggerevents};
+        },
+        finishcharactermancer: (message, request, triggerevents) => {
+            triggerevents.push({
+                sourceSection: message.sourceSection || '',
+                sourcetype: "worker",
+                mancer: "finish",
+                eventname: message.data || "",
+                data: mancer.pages
+            })
+            mancer.current_page = "final";
+            mancer.active = false;
+            delete mancer.pages;
+            return {request: request, triggerevents: triggerevents};
+        },
+        hidechoices: (message, request, triggerevents) => {
+            for(let i in message.data) {
+                let name = message.data[i];
+                mancer.current_node.querySelectorAll(`[class~=sheet-${name}].sheet-choice`).forEach((node)=>{
+                    node.className = node.className.replace("sheet-choice","sheet-choice-hidden");
+                    console.log("Choice hidden:",node.className);
+                })
+            }
+            return {request: request, triggerevents: triggerevents,}
+        },
+        setcharmancertext: (message, request, triggerevents) => {
+            for (let i in message.data) {
+                mancer.current_node.querySelectorAll(`[class=sheet-${i}]`).forEach((node)=>{
+                    node.innerHTML = message.data[i];
+                    sanitizeHTML(node);
+                    console.log(`Set text for class "${node.className}": "${node.innerHTML}"`);
+                });
+            }
+            return {request: request, triggerevents: triggerevents}
+        },
+        showchoices: (message, request, triggerevents) =>{
+            for(let i in message.data) {
+                let name = message.data[i];
+                mancer.current_node.querySelectorAll(`[class~=sheet-${name}].sheet-choice-hidden`).forEach((node)=>{
+                    node.className = node.className.replace("sheet-choice-hidden","sheet-choice");
+                    console.log("Choice showing:",node.className);
+                })
+            }
+            return {request: request, triggerevents: triggerevents,}
+        },
+        startcharactermancer: (message, request, triggerevents) => {
+            //load charmancer pages
+            document.querySelectorAll("charmancer").forEach((node)=>{
+                if (node.className.includes("sheet-charmancer")) {
+                    let name = node.className.match(/sheet-charmancer-([^\s]+)/)[1];
+                    mancer.pages[name] = {data: {}, values: {}, node: node};
+                }
+                else if (node.className.includes("repeating")) {
+                    let name = node.className.match(/repeating-([^\s]+)/)[1];
+                    mancer.repeatingSections.push(new RepeatingData(name.replace("repeating_",""),node));
+                }
+            });
+    
+            let page = loadMancerPage(message.data);
+            if (!page) {
+                return {request: request, triggerevents: triggerevents};
+            }
+    
+            mancer.active = true;
+            window._charmancerData = {};
+            window._activeCharacterId = "(_activeCharacterId)";
+            window._charmancerData[window._activeCharacterId] = mancer;
+
+            triggerevents.push({
+                sourceSection: message.sourceSection || '',
+                mancer: "page",
+                eventname: page,
+                sourcetype: "worker"
+            });
+            return {request: request, triggerevents: triggerevents};
+        },
+
+            //      /------------------------- (.) -------------------------\
+            // TODO vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        setcharmanceroptions: (message, request, triggerevents) =>{
+            let target = message.target,
+                newopts = message.data,
+                settings = message.options;
+
+            debugger;
+            if (typeof(newopts) === 'string') {
+                let pages = compendiumSearch(newopts);
+                newopts = pages.map(page => page.name + (settings.show_source? page.compendiumexpansion : ""));
+            }
+            if (settings.add) {newopts = newopts.concat(settings.add);}
+            
+            //could be select or radio
+            mancer.current_node.querySelectorAll(`sheet-${target}`).forEach((node)=>{
+                if (node.tagname === "SELECT") {
+                    for (let i in newopts) {
+                        let opt = document.createElement("option");
+                        opt.innerHTML = newopts[i];
+                        node.addChild(opt);
+                    }
+                    if (settings.disable)
+                        for (let i in node.childNodes) {
+                                for (let j in settings.disable) {
+                                    if (node.childNodes[i].innerHTML === settings.disable[j]) {
+                                        node.childNodes[i].setAttribute("disabled", "disabled");
+                                    }
+                                }
+                        }
+                }
+                //wait is it supposed to look for spans or inputs??? 
+                else if (node.tagname === "INPUT" && node.getAttribute("type") === "radio") {
+
+                }
+            });
+
+            return {request: request, triggerevents: triggerevents,};
+        },
+        disablecharmanceroptions: (message, request, triggerevents) =>{
+            return {request: request, triggerevents: triggerevents,};
+        },
+            // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            //      \-------------------------------------------------------/
+
+        // REPEATING SECTIONS [/]
+        addrepeatingsection: (message, request, triggerevents) => {
+            //add charactermancer repeating section
+            let target = message.target,
+            section = message.section,
+            name = message.name || message.section;
+            request.data = {};
+            request.type="attrreqfulfilled";
+
+            let node = mancer.current_node.querySelector(`[class=sheet-${target}]`);
+            let newRow = createRepeatingRow(repeatingSections,section,mancer,node);
+            console.log(`Added repeating row to mancer page "${mancer.current_page}" with type "${section}" and id "${newRow.id}"`);
+            request.data = newRow.id;
+            return {request: request, triggerevents: triggerevents};
+        },
+        clearrepeatingsections: (message, request, triggerevents) => {
+            //clearRepeatingSections
+            if (message.target) {
+                if (typeof(message.target) === 'string') {message.target = [message.target];}
+                for (let i in message.target) {
+                    let currentTarget = message.target[i];
+                    mancer.current_node.querySelectorAll(`[class=sheet-${currentTarget}]`).forEach((node) => {
+                        node.querySelectorAll("[data-repeating]").forEach((row) => {
+                            let id = row.getAttribute("data-repeating").split("_")[1];
+                            let found = false;
+                            for (let j in repeatingSections) {
+                                for (let k in repeatingSections[j].repsecs) {
+                                    if (repeatingSections[j].repsecs[k].id == id) {
+                                        delete repeatingSections[j].repsecs[k];
+                                        found = true; break;
+                                    }
+                                }
+                                if (found) {break;}
+                            }
+                            node.removeChild(row);
+                        })
+                    })
+                }
+            }
+            //clearRepeatingSectionsById
+            else if (message.repids) {
+                for (let i in message.repids) {
+                    let id = message.repids[i];
+                    let node;
+                    let found = false;
+                    for (let j in repeatingSections) {
+                        for (let k in repeatingSections[j].repsecs) {
+                            if (repeatingSections[j].repsecs[k].id == id) {
+                                node = repeatingSections[j].repsecs[k].element;
+                                delete repeatingSections[j].repsecs[k];
+                                found = true; break;
+                            }
+                        }
+                        if (found) {break;}
+                    }
+                    node.parentElement.removeChild(node);
+                }
+            }
+            return {request: request, triggerevents: triggerevents};
+        },
+        getrepeatingsections: (message, request, triggerevents) => {
+            let target = message.target;
+            for (let i in repeatingSections) {
+                if (repeatingSections[i].id == target) {
+                    request.data = repeatingSections[i].repsecs;
+                    break;
+                }
+            }
+            return {request: request, triggerevents: triggerevents};
+        },
+        removerepeatingrow: (message, request, triggerevents) => {
+            let split = message.data.split("_");
+            let sectionName = split[1];
+            let id = split[2];
+            let repcontainers = repeatingSections;
+            for (let i in repcontainers) {
+                if (repcontainers[i].id == sectionName) {
+                    let repsecs = repcontainers[i].repsecs;
+                    for (let j in repsecs) {
+                        if (repsecs[j].id === id) {
+                            repsecs[j].element.remove();
+                            delete repcontainers[i].repsecs[j];
+                            return {request: request, triggerevents: triggerevents};
+                        }
+                    }
+                }
+            }
+            return {request: request, triggerevents: triggerevents};
+        },
+
+        // MISC [/]
+        loadTranslationStrings: (message, request, triggerevents) => {
+            return {request: request, triggerevents: triggerevents};
+        },
+        act: (message, request, triggerevents) => {
+            if (mancer.active) {
+                if (message.name = "act_finish") {
+                    message.mancer = "finish";
+                    mancer.current_page = "final";
+                }
+                if (message.name = "act_cancel") {
+                    message.mancer = "cancel";
+                }
+            }
+            triggerevents.push(message);
+    
+            return {request: request, triggerevents: triggerevents};
+        },
     };
 
-    return function(message) {
+    // CALL HANDLER, PASS TO WORKERS
+    self.postMessage = function(message) {
         let request = {id: message.id, type: typeMap[message.type], data:message.data};
 
         if (verbose) {
@@ -335,23 +560,23 @@ function postMessage(mimic,comp,translations) {
         }
         let response;
         if (typeMap[message.type]) {
-            response = handler[message.type](mimic,message,request,[]);
+            response = handler[message.type](message,request,[]);
         }
         else {
             console.warn(`Unimplemented message type! ${message.type}`);
             return;
         }
         
-        mimic.context.messageHandler({data: response.request});
-        for (let i in response.triggerevents) {
-            mimic.context.trigger(response.triggerevents[i]);
+        try {
+            window.messageHandler({data: response.request});
+            window._charmancerData = mancer;
+            for (let i in response.triggerevents) {
+                trigger(response.triggerevents[i]);
+            }
+        }
+        catch(e) {
+            console.log("MIMIC: ERROR HANDLING MESSAGE:\n",e,'\n',message,'\n',request,'\n',response);
+            debugger;
         }
     }
 }
-
-module.exports = {
-    RepeatingSection: RepeatingSection,
-    RepeatingData: RepeatingData,
-    postMessage: postMessage,
-    log: log
-};
