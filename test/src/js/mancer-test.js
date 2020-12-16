@@ -23,19 +23,46 @@ function testMancer() {
     };
     let results = {};
 
-    on("page:slide1 page:slide2", (info)=>{
+    on("mancerchange:checkbox mancerroll:button remove:repeating_type1 remove:repeating_type2",(info) => {
+        results[info.sourceAttribute] = results[info.sourceAttribute] || [];
+        results[info.sourceAttribute].push(info);
+    })
+    on("mancer:cancel",(info) => {
+        console.log("mancer:cancel",info);
+        startCharactermancer("slide2");
+    });
+
+    on("page:slide1", (info)=>{results
+        let selectors = [
+            "button[type=action][name*=act_]",
+            "button[type=roll][name*=roll_]",
+            "button[type=submit]",
+            "button[type=back]",
+            "button[type=cancel]",
+        ];
+        document.querySelectorAll(selectors.join()).forEach((node)=>{
+            node.dispatchEvent(new MouseEvent('click'));
+        });})
+
+    on("page:slide2", (info)=>{
         addRepeatingSection("repeating","type1","addedType",(res)=>{
             results["addRepeatingSection"] = res;
             addRepeatingSection("repeating","type1",(res)=>{
                 results["addRepeatingSectionAgain"] = res;
                 getRepeatingSections("repeating",(res)=>{
                     results["getRepeatingSections"] = res;
+                    let order = [res.list[0], res.list[1]];
+                    setSectionOrder("repeating",order,(res)=>{
+                        results["setSectionOrder"] = res;
+                    })
                 });
+
                 getSectionIDs("type1",(res)=>{
                     setCharmancerText({"to-be-modified":"Hello, World!"});
+
                     changeCompendiumPage("iframe","Rules:Races");
             
-                    setCharmancerOptions("mancer-select","Index:Equipment Type:PC%20Equipment", {
+                    setCharmancerOptions("mancer-select","Category:Equipment Type:PC%20Equipment", {
                         category: "Manual",
                         disable: ["b"],
                         selected: "c",
@@ -44,13 +71,15 @@ function testMancer() {
                     },(res)=>{
                         results["setCharmancerOptions"] = res;
                     })
+
                     disableCharmancerOptions("mancer-select",["a"]);
+                    disableCharmancerOptions("mancer-select",[]);
             
                     hideChoices(["example"]);
                     showChoices(["example"]);
             
                     getCompendiumPage("Rules:Races", (data)=>{results["getCompendiumPage"] = data;});
-                    getCompendiumQuery("TODO", (data)=>{results["getCompendiumQuery"] = data;});
+                    getCompendiumQuery("Class:Solarian", (data)=>{results["getCompendiumQuery"] = data;});
 
                     let newvals = {};
                     for (let i in sheet.repsecs) {
@@ -67,23 +96,23 @@ function testMancer() {
 
                     clearRepeatingSectionById(res[0],(res)=>{results["clearRepeatingSectionByID"] = res;});
                     clearRepeatingSections("repeating",(res)=>{results["clearRepeatingSections"] = res;});
-                    console.log(results);
+
+                    
+                    getCharmancerData();
+                    deleteCharmancerData(["slide1"]);
+                    document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
                 });
             });
         });
 
-        getCharmancerData();
-        deleteCharmancerData(["slide1"]);
-
-        changeCharmancerPage("final");
     });
-    on("page:final", (info)=>{
+    on("mancerfinish:test", (info)=>{
         results["page:final"] = info;
         finishCharactermancer();
+        console.log(results);
     });
 
     startCharactermancer("slide1");
-    console.log(results);
 }
 
 console.log("in testMancer.js ...");

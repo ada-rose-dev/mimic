@@ -34,14 +34,32 @@ function initMimicEnvironment(self) {
         return attrs;
     })(document.firstElementChild,self.attrs);
     (function registerEventListeners(){
-        document.querySelectorAll("[type=action][name*=act_]").forEach((node)=>{
+        let selectors = [
+             "button[type=action][name*=act_]",
+             "button[type=roll][name*=roll_]",
+             "button[type=submit]",
+             "button[type=back]",
+             "button[type=cancel]",
+             "button[type=finish]",
+        ];
+
+        document.querySelectorAll(selectors.join()).forEach((node)=>{
             if (node.getAttribute) {
                 node.onclick = ()=>{
-                    let name = "clicked:" + node.getAttribute("name").replace("act_","");
+                    let type = node.getAttribute("type");
+                    let prefix = "";
+                    if (type == "action") prefix = "clicked:";
+                    else if (type == "roll") prefix = mancer.active? "mancerroll:" : "roll:";
+                    
+                    let name = prefix + (node.getAttribute("name") || "").replace("act_","").replace("roll_","");
+                    if (type == "submit" || type == "back" || type == "cancel" || type == "finish") {
+                        name = type;
+                    }
+
                     let message = {
                         eventname: name,
                         triggerType: "player",
-                        oattr: name.replace("clicked:",""),
+                        oattr: name.replace(prefix,""),
                         type: "act",
                         data: node.getAttribute("value")
                     };

@@ -67,7 +67,7 @@ let cwd = "";
             }
         }
         else if (!target_dir) {
-            target_dir = process.argv[i];
+            target_dir = process.argv[i].replace("./",cwd);
         }
         else {
             if (process.argv[i].search(".js") === 0) {
@@ -104,6 +104,7 @@ async function mainLoop(directory,filenames,watch) {
         }
     }
     log("Loading files...");
+    await loadInternals();
     let files = await loadFiles(directory,filenames);
     runScripts(files);
     if (watch) {
@@ -164,16 +165,21 @@ async function loadCompendium(name) {
         console.warn(`Run \`mimic --scrape \<username\> \<password\> \<compendium_name\>\` to download the compendium files.`);
     }
 }
-async function loadFile(dirent, directory) {
+async function loadInternals() {
+    loadFiles("./modules/",[],true);
+}
+async function loadFile(dirent, directory, internal) {
     let name = dirent.name || dirent;
     let fullname = (directory? directory+'/'+name : name).replace(/\/+/gi,"/");
     try {
         if (dirent.isDirectory && dirent.isDirectory()) {
-            Object.assign(scripts,loadFiles(fullname));
+            Object.assign(scripts,loadFiles(fullname,[],internal));
         }
         else if (name.substring(name.length-3) === ".js") {
-            if (scripts[fullname]) delete scripts[fullname];
-            scripts[fullname] = fs.readFileSync(fullname);
+            if (!internal) {
+                if (scripts[fullname]) delete scripts[fullname];
+                scripts[fullname] = fs.readFileSync(fullname);
+            }
             watched[name] = fullname;
         }
         else if (name == "sheet.json") {
@@ -207,7 +213,7 @@ async function loadFile(dirent, directory) {
         log("ERROR LOADING FILE: ",fullname,"\n ERROR: ", e);
     }
 }
-async function loadFiles(directory, filenames = []) {
+async function loadFiles(directory, filenames = [], internal = false) {
     if (filenames.length == 0) {
         try {
             filenames = fs.readdirSync(directory, {withFileTypes:true});
@@ -222,7 +228,7 @@ async function loadFiles(directory, filenames = []) {
         }
     }
     for (i in filenames) {
-        loadFile(filenames[i], directory);
+        loadFile(filenames[i], directory, internal);
     }
 }
 

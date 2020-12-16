@@ -34,6 +34,7 @@ function definePostMessage(self,comp) {
         "addrepeatingsection": "attrreqfulfilled",
         "getrepeatingsections": "attrreqfulfilled",
         "clearrepeatingsections": "attrreqfulfilled",
+        "setsectionorder": "attrreqfulfilled",
     
         // MISC
         "act": "act",
@@ -42,31 +43,47 @@ function definePostMessage(self,comp) {
         "trigger":"trigger",
     };
 
-    function compendiumSearch(queryString) {
-        let data = queryString,
-            query = {},
+    function compendiumSearch(queryArr) {
+        let data = queryArr,
+            queries = [],
             matched_pages = [];
 
+        // parse query
         if (typeof(data) === "string") {
-            data = data.split(" ");
+            data = [data];
         }
         for (let i in data) {
-            let obj = data[i].split(":");
-            query[obj[0]] = decodeURI(obj[1]);
+            let reqs = data[i].split(" ");
+            let query = {};
+            for (let j in reqs) {
+                let obj = reqs[j].split(":");
+                query[obj[0]] = decodeURI(obj[1]);
+            }
+            queries.push(query);
         }
+
+        //execute search
         try {
             for (let i in comp) {
                 let page = comp[i];
-                for (let qkey in query) {
-                    if (page.data[qkey]) {
-                        let val = page.data[qkey];
-                        if (val == (query[qkey]))
-                            matched_pages.push(page);
+
+                for (let j in queries) {
+                    let query = queries[j];
+                    let matched = true;
+
+                    for (let qkey in query) {
+
+                        if (page.data[qkey]) {
+                            matched = (page.data[qkey] == (query[qkey]))
+                        }
+                        else {
+                            matched = (page.data["Category"] == qkey && page.name == (query[qkey]))
+                        }
+
+                        if (!matched) break;
                     }
-                    else {
-                        let val = page.data["Category"];
-                        if (val === qkey && page.name == (query[qkey]))
-                            matched_pages.push(page);
+                    if (matched) {
+                        matched_pages.push(page);
                     }
                 }
             }
@@ -118,6 +135,20 @@ function definePostMessage(self,comp) {
     }
     function fillAcceptFields() {
 
+    }
+    function repsecToTree(repsec, tree = {}) {
+        tree[repsec.id] = {};
+        for (let i in repsec.repsecs) {
+            repsecToTree(repsec.repsecs[i],tree[repsec.id]);
+        }
+        return tree;
+    }
+    function checkMancer(data) {
+        if (!mancer.active) {
+            console.log("WARNING: Trying to run mancer-only function while mancer is inactive!", data);
+            return false;
+        }
+        return true;
     }
 
     const handler = {
@@ -185,15 +216,28 @@ function definePostMessage(self,comp) {
                     //check if this is contained in a repeating section or fieldset
                     let parent = node;
                     while (parent) {
-                        if (parent.nodeName == "FIELDSET" || parent.nodeName == "CHARMANCER" || parent.className.includes("repcontainer")) {
+                        if (parent.nodeName == "FIELDSET" || parent.className.includes("repcontainer")) {
                             return;
                         }
                         parent = parent.parentElement;
                     }
 
                     let node_previousvalue = node.outerHTML;
-                    node.setAttribute("value",data[dataProperty]);
-                    log(`HTML node for <${prefix+attrName}> updated`,`\n${node_previousvalue} ==> ${node.outerHTML}`);
+                    if (node.tagName === "INPUT" && node.getAttribute("type") == "radio" || node.getAttribute("type") == "checkbox") {
+                        if (node.getAttribute("value") === data[dataProperty]) {
+                            node.setAttribute("checked","checked");
+                        }
+                        else {
+                            node.setAttribute("checked","");
+                        }
+                    }
+                    else {
+                        node.setAttribute("value",data[dataProperty]);
+                    }
+
+                    let node_newvalue = node.outerHTML;
+                    if (node_newvalue !== node_previousvalue)
+                        console.log(`HTML node for "${prefix+attrName}" updated`,`\n${node_previousvalue} ==> ${node.outerHTML}`);
                 })
                 if (found.length == 0) {
                     console.warn("Unable to find an HTML element for passed attribute: ",dataProperty);
@@ -207,10 +251,11 @@ function definePostMessage(self,comp) {
                         oattr : oattr,
                         eventname : dataProperty,
                         sourcetype : "worker",
-                        mancer: mancer.active ? "mancerchange" : ""
+                        mancer: mancer.active ? "mancer" : ""
                     });
                 }
             }
+
             return {request: request, triggerevents: triggerevents};
         },
         attrreq: (message, request, triggerevents) => {
@@ -226,14 +271,14 @@ function definePostMessage(self,comp) {
                         attrName = split.splice(3, split.length).join("_");
                         sectionName = split[1];
                         sectionID = split[2];
-                        repsec = findRepeatingSection(repeatingSectionssectionName,"id",sectionID);
+                        repsec = findRepeatingSection(repeatingSections,sectionName,"id",sectionID);
                         if (!repsec) continue;
                     }
                     else {
                         attrName = split[2];
                         sectionName = split[1];
                         sectionID = _activeRepeatingField;
-                        repsec = findRepeatingSection(repeatingSectionssectionName,"id",sectionID);
+                        repsec = findRepeatingSection(repeatingSections,sectionName,"id",sectionID);
                         if (!repsec) {console.warn("Trying to get repeating value with no repeating section specified!"); continue;}
                     }
                     request.data[attr] = repsec.attrs[attrName];
@@ -261,6 +306,8 @@ function definePostMessage(self,comp) {
 
         // COMPENDIUM [/]
         changecompendiumpage: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             let page = compendiumSearch(message.data)[0];
             mancer.current_compendium_page = page.name;
             
@@ -272,6 +319,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents};
         },
         getcompendiumpage: (message, request, triggerevents)=> {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             if (comp) {
                 let arr = message.data;
                 if (typeof(message.data) == "string") {
@@ -288,6 +337,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents};
         },
         getcompendiumquery: (message, request, triggerevents)=> {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             if (comp) {
                 request.data = compendiumSearch(message.data[0]);;
             }
@@ -297,8 +348,10 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents};
         },
 
-        // MANCER [-]
+        // MANCER [/]
         changecharmancerpage: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             let page = loadMancerPage(message.data);
             triggerevents.push({
                 sourceSection: message.sourceSection || '',
@@ -309,6 +362,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents,};
         },
         deletecharmancerdata: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             if (message.data) {
                 for (let i in message.data) {
                     if (mancer.pages[message.data[i]].data) delete mancer.pages[message.data[i]].data;
@@ -322,6 +377,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents};
         },
         finishcharactermancer: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             triggerevents.push({
                 sourceSection: message.sourceSection || '',
                 sourcetype: "worker",
@@ -335,6 +392,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents};
         },
         hidechoices: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             for(let i in message.data) {
                 let name = message.data[i];
                 mancer.current_node.querySelectorAll(`[class~=sheet-${name}].sheet-choice`).forEach((node)=>{
@@ -345,6 +404,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents,}
         },
         setcharmancertext: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             for (let i in message.data) {
                 mancer.current_node.querySelectorAll(`[class=sheet-${i}]`).forEach((node)=>{
                     node.innerHTML = message.data[i];
@@ -355,6 +416,8 @@ function definePostMessage(self,comp) {
             return {request: request, triggerevents: triggerevents}
         },
         showchoices: (message, request, triggerevents) =>{
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             for(let i in message.data) {
                 let name = message.data[i];
                 mancer.current_node.querySelectorAll(`[class~=sheet-${name}].sheet-choice-hidden`).forEach((node)=>{
@@ -395,54 +458,106 @@ function definePostMessage(self,comp) {
             });
             return {request: request, triggerevents: triggerevents};
         },
-
-            //      /------------------------- (.) -------------------------\
-            // TODO vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
         setcharmanceroptions: (message, request, triggerevents) =>{
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
             let target = message.target,
                 newopts = message.data,
                 settings = message.options;
 
-            debugger;
             if (typeof(newopts) === 'string') {
                 let pages = compendiumSearch(newopts);
-                newopts = pages.map(page => page.name + (settings.show_source? page.compendiumexpansion : ""));
+                newopts = pages.map(page => page.name + (settings.show_source? ` (${page.compendiumexpansion})` : ""));
             }
             if (settings.add) {newopts = newopts.concat(settings.add);}
+            request.data = newopts;
+            request.id = message.reqid;
             
             //could be select or radio
-            mancer.current_node.querySelectorAll(`sheet-${target}`).forEach((node)=>{
-                if (node.tagname === "SELECT") {
+            mancer.current_node.querySelectorAll(`.sheet-${target}`).forEach((node)=>{
+                let newNodes = [];
+                if (node.tagName === "SELECT") {
+                    delete node.childNodes;
                     for (let i in newopts) {
                         let opt = document.createElement("option");
                         opt.innerHTML = newopts[i];
-                        node.addChild(opt);
+                        node.appendChild(opt);
+                        newNodes.push(opt);
                     }
-                    if (settings.disable)
-                        for (let i in node.childNodes) {
-                                for (let j in settings.disable) {
-                                    if (node.childNodes[i].innerHTML === settings.disable[j]) {
-                                        node.childNodes[i].setAttribute("disabled", "disabled");
-                                    }
-                                }
-                        }
                 }
-                //wait is it supposed to look for spans or inputs??? 
-                else if (node.tagname === "INPUT" && node.getAttribute("type") === "radio") {
+                else if (node.tagName === "INPUT" && node.getAttribute("type") === "radio") {
+                    for (let i in newopts) {
+                        let opt = document.createElement("input");
+                        opt.setAttribute("type", "radio");
+                        opt.setAttribute("name", node.getAttribute("name"));
+                        opt.setAttribute("value",newopts[i]);
+                        opt.innerHTML = newopts[i];
+                        node.after(opt);
+                        newNodes.push(opt);
+                    }
+                }
+                else if (node.tagName === "SPAN") {
+                    for (let i in newopts) {
+                        let opt = document.createElement("label");
+                        let checkbox = document.createElement("input");
+                        checkbox.name = node.name;
+                        checkbox.value = newopts[i];
+                        checkbox.type = "checkbox";
+                        newNodes.push(checkbox);
+                        opt.appendChild(checkbox);
+                        opt.textContent = newopts[i];
+                    }
+                }
 
+                if (settings.disable)
+                for (let i in newNodes) {
+                    for (let j in settings.disable) {
+                        if (newNodes[i].innerHTML === settings.disable[j]) {
+                            newNodes[i].setAttribute("disabled", "disabled");
+                        }
+                    }
                 }
+
+                log(`Options updated: ${target}`,node.outerHTML);
             });
 
             return {request: request, triggerevents: triggerevents,};
         },
         disablecharmanceroptions: (message, request, triggerevents) =>{
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
+            let target = message.target;
+            let toBeDisabled = message.data;
+            if (!toBeDisabled || toBeDisabled.length === 0) {
+                console.log(`Empty array passed to disableCharmancerOptions: All options for .sheet-${target} will be enabled!`)
+            }
+
+            mancer.current_node.querySelectorAll(`.sheet-${target}`).forEach(
+                (node)=>{
+                    if (node.tagName === "SELECT") {
+                        let children = node.childNodes;
+                        for (let i = 0; i < children.length; i++) {
+                            children[i].setAttribute("disabled","false");
+                            for (let j = 0; j < toBeDisabled.length; ++j){
+                                if (children[i].value == toBeDisabled[j] && !children[i].getAttribute("selected")) {
+                                    children[i].setAttribute("disabled","disabled");
+                                    console.log(`Disabled option: .sheet-${target} > ${children[i].className} (${children[i].value})`);
+                                }
+                            }
+                        }
+                    }
+                    else if (node.tagName == "INPUT" && node.getAttribute(type) === "radio") {
+                        
+                    }
+                }
+            )
+
             return {request: request, triggerevents: triggerevents,};
         },
-            // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            //      \-------------------------------------------------------/
 
         // REPEATING SECTIONS [/]
         addrepeatingsection: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
             //add charactermancer repeating section
             let target = message.target,
             section = message.section,
@@ -451,12 +566,13 @@ function definePostMessage(self,comp) {
             request.type="attrreqfulfilled";
 
             let node = mancer.current_node.querySelector(`[class=sheet-${target}]`);
-            let newRow = createRepeatingRow(repeatingSections,section,mancer,node);
+            let newRow = createRepeatingRow(mancer.repeatingSections,section,mancer,node);
             console.log(`Added repeating row to mancer page "${mancer.current_page}" with type "${section}" and id "${newRow.id}"`);
             request.data = newRow.id;
             return {request: request, triggerevents: triggerevents};
         },
         clearrepeatingsections: (message, request, triggerevents) => {
+            if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
             //clearRepeatingSections
             if (message.target) {
                 if (typeof(message.target) === 'string') {message.target = [message.target];}
@@ -503,12 +619,31 @@ function definePostMessage(self,comp) {
         },
         getrepeatingsections: (message, request, triggerevents) => {
             let target = message.target;
-            for (let i in repeatingSections) {
-                if (repeatingSections[i].id == target) {
-                    request.data = repeatingSections[i].repsecs;
-                    break;
+            //NOTE: THIS RETURN STRUCTURE MAY NOT BE CORRECT. DOUBLE CHECK ON SITE.
+            let tree = {};
+            let list = [];
+            let nodes = document.querySelectorAll(`.sheet-${target}`) || [mancer.current_node]
+            nodes.forEach(
+                (node)=>{
+                    for (let i = 0; i < node.children.length; i++) {
+                        let child = node.children[i];
+                        if (child.getAttribute && child.getAttribute("data-repeating")) {
+                            for (let j in mancer.repeatingSections) {
+                                let repdata = mancer.repeatingSections[j];
+                                for (let k in repdata.repsecs) {
+                                    let repsec = repdata.repsecs[k];
+                                    let found = repsec.element;
+                                    if (found == child) {
+                                        Object.assign(tree,repsecToTree(repsec));
+                                        list.push(repsec.id);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            )
+            request.data = {"tree":tree, "list":list};
             return {request: request, triggerevents: triggerevents};
         },
         removerepeatingrow: (message, request, triggerevents) => {
@@ -530,6 +665,29 @@ function definePostMessage(self,comp) {
             }
             return {request: request, triggerevents: triggerevents};
         },
+        setsectionorder: (message, request, triggerevents) => {
+            let arr = message.data;
+            let target = message.id.split("//")[1];
+            let frag = document.createDocumentFragment();
+
+            document.querySelectorAll(`.sheet-${target}`).forEach((node)=>{
+                for (let i = 0; i < arr.length; ++i) {
+                    for (let j = 0; j < node.children.length; ++j) {
+                        let data = node.children[j].getAttribute("data-repeating");
+                        if (data.includes(arr[i])) {
+                            frag.appendChild(node.children[j]);
+                            break;
+                        }
+                    }
+                }
+                for (let i = 0; i < node.children.length; ++j) {
+                    frag.appendChild(node.children[j]);
+                }
+                node.appendChild(frag);
+            })
+
+            return {request: request, triggerevents: triggerevents};
+        },
 
         // MISC [/]
         loadTranslationStrings: (message, request, triggerevents) => {
@@ -537,15 +695,41 @@ function definePostMessage(self,comp) {
         },
         act: (message, request, triggerevents) => {
             if (mancer.active) {
-                if (message.name = "act_finish") {
+                if (message.eventname == "finish") {
                     message.mancer = "finish";
                     mancer.current_page = "final";
+                    message.eventname = message.data;
+                    message.data = mancer;
                 }
-                if (message.name = "act_cancel") {
+                else if (message.eventname == "cancel") {
                     message.mancer = "cancel";
+                    mancer.active = false;
+                }
+                else if (message.eventname == "back") {
+                    message.mancer = "page";
+                }
+                else if (message.eventname == "submit") {
+                    //check for required fields
+                    document.querySelectorAll("[required]").forEach((node) => {
+                        if (!node.getAttribute("value")) {
+                            message = null;
+                            if (!node.className.includes("sheet-hilite")) {node.className += " sheet-hilite";}
+                            console.log(`WARNING: Trying to submit but required field has no value: ${node.outerHTML}`);
+                            return;
+                        }
+                    });
+                    if (message) {
+                        message.mancer = "page";
+                        message.eventname = message.data;
+                    }
                 }
             }
-            triggerevents.push(message);
+            else if (message.eventname == "finish" || message.eventname == "cancel" || message.eventname == "back" || message.eventname == "submit")  {
+                console.log("ERROR: Trying to use mancer buttons when mancer is inactive!");
+                message = null;
+            }
+            if (message)
+                triggerevents.push(message);
     
             return {request: request, triggerevents: triggerevents};
         },

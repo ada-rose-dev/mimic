@@ -62,6 +62,48 @@ exports.scrape = async function (email, pass, comp_name, id_map = [], cache_dir 
             });
         console.log(hrefs);
 
+
+        //linear method
+        console.log("Obtaining base entry...");
+        let url = await nightmare.goto(hrefs[0])
+            .wait("#pagecontent div a")
+            .evaluate(()=>{
+                let all = document.querySelectorAll("#pagecontent div a");
+                for (let i in all) {
+                    if (all[i].href)
+                    return all[i].href;
+                }
+            });
+
+        url = await nightmare.goto(url)
+            .wait("#editAttrs a")
+            .evaluate(()=>{return document.querySelector("#editAttrs a").href;})
+
+        let i = url.match(/\/dataview\/\w+\/(\d+)/);
+        i = i[1] * 1;
+        let urlBase = url.replace(i,"");
+        console.log("Base entry found at url",url);
+        let condition = true;
+        while (condition) {
+            try {
+                let json = await nightmare.goto(urlBase + i).evaluate(()=>{return page;})
+                try {
+                    var filepath = cache_dir+json.name+".json";
+                    id_map[json.name] = json.id;
+                    json = JSON.stringify(json);
+                    fs.writeFileSync(filepath, json,()=>{});
+                    console.log(`(${i})`,"wrote ",filepath);
+                }
+                catch(e) {console.error(`(${i})`,"unable to parse JSON for page id ",json.id);}
+            }
+            catch(e) {
+                break;
+            }
+            ++i;
+        }
+
+
+        /* //recursive method
         //asynchronously scrape the compendium items
         console.log("scraping links...")
         var links = [];
@@ -106,6 +148,7 @@ exports.scrape = async function (email, pass, comp_name, id_map = [], cache_dir 
                 console.warn(`(${i}/${links.length})`,"Unable to find attributes for URL",links[i]);
             }
         }
+        */
     }
     catch (error) {
         console.log("Unable to scrape compendium!")

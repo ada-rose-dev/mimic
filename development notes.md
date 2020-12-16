@@ -18,3 +18,9 @@ General structure:
 # modules/messageHandler.js - Message Handling
 1. Interprets messages.
     * No data is stored here - this is only a system for the data passed by the Mimic object.
+
+# mancer structure
+* mancer
+* * pages
+* * * repeatingSections
+* * * * repeatingData

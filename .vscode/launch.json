@@ -14,8 +14,18 @@
             ],
             "program": "${workspaceFolder}\\index.js",
             "args": [
-                "C:/dev/contract/untracked/mimic/test/"
+                "./test/"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program (watch)",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\index.js",
+            "args": ["./test/", "--watch"]
         },
         {
             "type": "node",
@@ -45,7 +55,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\index.js",
-            "args": ["--scrape", "YOUR UN HERE","YOUR PW HERE","YOUR COMPENDIUM_NAME HERE"]
+            "args": ["--scrape", "nyx.mandala@gmail.com","Non-b1nary!","starfinder"]
         },
     ]
 }

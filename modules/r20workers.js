@@ -93,7 +93,7 @@ function initR20(self, globalEval, globalUnderscore) {
             info.roll = eventinfo.data;
         }
 
-        console.log("Triggering for " + subname);
+        console.log("Triggering for " + finalattrname);
 
         _activeTrigger = subname.split(":")[1];
 
@@ -722,6 +722,7 @@ function initR20(self, globalEval, globalUnderscore) {
             }
 
         } catch (e) {
+            debugger;
             console.log(e);
             console.log(e.stack);
         }

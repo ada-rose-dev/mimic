@@ -2,19 +2,24 @@ mixin test-suite()
     .inputs
         span(name="comp_span")
         input(type="hidden" name="comp_hidden" value="true")
-        input(type="checkbox" name="comp_checkbox")
+        input(type="checkbox" name="comp_checkbox" value=1)
+        input(type="checkbox" name="comp_checkbox" value=2)
+        input(type="checkbox" name="comp_checkbox" value=3 checked)
         input(type="text" name="comp_textInput")
-        input(type="radio" name="comp_radioInput")
+        input(type="radio" name="comp_radioInput" value=1)
+        input(type="radio" name="comp_radioInput" value=2)
+        input(type="radio" name="comp_radioInput" value=3 checked)
         input(type="text" name="comp_required" required)
     .selects
         select(name="comp_select").mancer-select
     .buttons
         button(type="action" name="act_button")
         button(type="action" name="act_startMancer")
-        button(type="submit")
-        button(type="back")
-        button(type="cancel")
-        button(type="finish")
+        button(type="roll" name="roll_button")
+        button(type="submit" value = "slide2")
+        button(type="back" value = "slide1")
+        button(type="cancel" value = "foo")
+        button(type="finish" value = "test")
     .mancer-specific
         select(name="comp_accept" accept="Category:Races")
         .choice.example

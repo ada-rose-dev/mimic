@@ -43,6 +43,7 @@ class RepeatingSection {
         this.id = id;                       
         this.element = element;
         this.attrs = attrs || getElementAttrs(element,this.attrs);
+        this.repsecs = [];
     }
 }
 class RepeatingData {

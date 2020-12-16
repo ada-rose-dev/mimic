@@ -2,8 +2,8 @@
 //-- Sheetworker constants
 //--
 function testSheet (){
-    const results = {};
-    const sheet = {
+    let results = {};
+    let sheet = {
         attrs: [
             "span",
             "hidden",
@@ -34,7 +34,7 @@ function testSheet (){
     //--
     //-- Events
     //--
-    const repeating_attr_listener = (()=>{
+    let repeating_attr_listener = (()=>{
         let res = "";
         for (let i of sheet.repsecs) {
             for (let j of sheet.attrs) {
@@ -44,7 +44,7 @@ function testSheet (){
         return res;
     })();
 
-    const listener =
+    let listener =
         "change:" + sheet.attrs.join(" change:") +
         repeating_attr_listener +
         "remove:repeating_" + sheet.repsecs.join(" remove:repeating_") +
