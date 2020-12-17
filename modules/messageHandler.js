@@ -134,7 +134,25 @@ function definePostMessage(self,comp) {
         return page;
     }
     function fillAcceptFields() {
+        mancer.current_node.querySelectorAll("[accept]").forEach((node)=>{
+            let value = node.getAttribute("accept");
+            let queryres = compendiumSearch(value);
 
+            if (node.tagName === "SELECT") {
+                let frag = document.createDocumentFragment();
+                for (let i in queryres) {
+                    let opt = document.createElement("option");
+                    opt.innerHTML = queryres[i].name;
+                    frag.appendChild(opt);
+                }
+                node.appendChild(frag);
+                console.log("Accept field populatled: ",node.outerHTML);
+            }
+            else if (node.tagName === "DIV" && node.className.includes("sheet-compendium-page")) {
+                node.innerHTML = queryres[0].cachedhtml;
+                console.log("Accept field populatled: ",node.outerHTML);
+            }
+        })
     }
     function repsecToTree(repsec, tree = {}) {
         tree[repsec.id] = {};
@@ -261,7 +279,7 @@ function definePostMessage(self,comp) {
         attrreq: (message, request, triggerevents) => {
             request.data = {};
             let attrreq = Array.isArray(message.data) ? message.data : [message.data];
-            for (i in attrreq) {
+            for (let i in attrreq) {
                 let attr = attrreq[i];
                 if (attr.includes("repeating_")) {
                     let split = attr.split("_");

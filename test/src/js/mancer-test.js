@@ -32,7 +32,7 @@ function testMancer() {
         startCharactermancer("slide2");
     });
 
-    on("page:slide1", (info)=>{results
+    on("page:slide1", (info)=>{
         let selectors = [
             "button[type=action][name*=act_]",
             "button[type=roll][name*=roll_]",
@@ -40,9 +40,15 @@ function testMancer() {
             "button[type=back]",
             "button[type=cancel]",
         ];
-        document.querySelectorAll(selectors.join()).forEach((node)=>{
-            node.dispatchEvent(new MouseEvent('click'));
-        });})
+        if (mimic) {
+            document.querySelectorAll(selectors.join()).forEach((node)=>{
+                node.dispatchEvent(new MouseEvent('click'));
+            });
+        }
+        else {
+            changeCharmancerPage("slide2");
+        }
+    });
 
     on("page:slide2", (info)=>{
         addRepeatingSection("repeating","type1","addedType",(res)=>{
@@ -100,7 +106,10 @@ function testMancer() {
                     
                     getCharmancerData();
                     deleteCharmancerData(["slide1"]);
-                    document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
+                    
+                    if(mimic) {
+                        document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
+                    }
                 });
             });
         });

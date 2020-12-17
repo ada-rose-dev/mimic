@@ -96,76 +96,212 @@
   </div>
 </charmancer>
 <charmancer class="sheet-charmancer-slide1">
-  <div class="inputs"><span name="comp_span"></span>
-    <input type="hidden" name="comp_hidden" value="true"/>
-    <input type="checkbox" name="comp_checkbox" value="1"/>
-    <input type="checkbox" name="comp_checkbox" value="2"/>
-    <input type="checkbox" name="comp_checkbox" value="3" checked="checked"/>
-    <input type="text" name="comp_textInput"/>
-    <input type="radio" name="comp_radioInput" value="1"/>
-    <input type="radio" name="comp_radioInput" value="2"/>
-    <input type="radio" name="comp_radioInput" value="3" checked="checked"/>
-    <input type="text" name="comp_required" required="required"/>
+  <div class="test">
+    <div class="inputs"><span name="comp_span"></span>
+      <input type="hidden" name="comp_hidden" value="true"/>
+      <input type="checkbox" name="comp_checkbox" value="1"/>
+      <input type="checkbox" name="comp_checkbox" value="2"/>
+      <input type="checkbox" name="comp_checkbox" value="3" checked="checked"/>
+      <input type="text" name="comp_textInput"/>
+      <input type="radio" name="comp_radioInput" value="1"/>
+      <input type="radio" name="comp_radioInput" value="2"/>
+      <input type="radio" name="comp_radioInput" value="3" checked="checked"/>
+      <input type="text" name="comp_required" required="required"/>
+    </div>
+    <div class="selects">
+      <select class="mancer-select" name="comp_select"></select>
+    </div>
+    <div class="buttons">
+      <button type="action" name="act_button"></button>
+      <button type="action" name="act_startMancer"></button>
+      <button type="roll" name="roll_button"></button>
+      <button type="submit" value="slide2"></button>
+      <button type="back" value="slide1"></button>
+      <button type="cancel" value="foo"></button>
+      <button type="finish" value="test"></button>
+    </div>
+    <div class="mancer-specific">
+      <select name="comp_accept" accept="Category:Races"></select>
+      <div class="choice example"></div>
+      <p class="to-be-modified"></p>
+    </div>
+    <div class="repeating">
+      <!--add repeating section in test.js-->
+    </div>
+    <div class="iframe"></div>
   </div>
-  <div class="selects">
-    <select class="mancer-select" name="comp_select"></select>
-  </div>
-  <div class="buttons">
-    <button type="action" name="act_button"></button>
-    <button type="action" name="act_startMancer"></button>
-    <button type="roll" name="roll_button"></button>
-    <button type="submit" value="slide2"></button>
-    <button type="back" value="slide1"></button>
-    <button type="cancel" value="foo"></button>
-    <button type="finish" value="test"></button>
-  </div>
-  <div class="mancer-specific">
-    <select name="comp_accept" accept="Category:Races"></select>
-    <div class="choice example"></div>
-    <p class="to-be-modified"></p>
-  </div>
-  <div class="repeating">
-    <!--add repeating section in test.js-->
-  </div>
-  <div class="iframe"></div>
 </charmancer>
 <charmancer class="sheet-charmancer-slide2">
-  <div class="inputs"><span name="comp_span"></span>
-    <input type="hidden" name="comp_hidden" value="true"/>
-    <input type="checkbox" name="comp_checkbox" value="1"/>
-    <input type="checkbox" name="comp_checkbox" value="2"/>
-    <input type="checkbox" name="comp_checkbox" value="3" checked="checked"/>
-    <input type="text" name="comp_textInput"/>
-    <input type="radio" name="comp_radioInput" value="1"/>
-    <input type="radio" name="comp_radioInput" value="2"/>
-    <input type="radio" name="comp_radioInput" value="3" checked="checked"/>
-    <input type="text" name="comp_required" required="required"/>
+  <div class="test">
+    <div class="inputs"><span name="comp_span"></span>
+      <input type="hidden" name="comp_hidden" value="true"/>
+      <input type="checkbox" name="comp_checkbox" value="1"/>
+      <input type="checkbox" name="comp_checkbox" value="2"/>
+      <input type="checkbox" name="comp_checkbox" value="3" checked="checked"/>
+      <input type="text" name="comp_textInput"/>
+      <input type="radio" name="comp_radioInput" value="1"/>
+      <input type="radio" name="comp_radioInput" value="2"/>
+      <input type="radio" name="comp_radioInput" value="3" checked="checked"/>
+      <input type="text" name="comp_required" required="required"/>
+    </div>
+    <div class="selects">
+      <select class="mancer-select" name="comp_select"></select>
+    </div>
+    <div class="buttons">
+      <button type="action" name="act_button"></button>
+      <button type="action" name="act_startMancer"></button>
+      <button type="roll" name="roll_button"></button>
+      <button type="submit" value="slide2"></button>
+      <button type="back" value="slide1"></button>
+      <button type="cancel" value="foo"></button>
+      <button type="finish" value="test"></button>
+    </div>
+    <div class="mancer-specific">
+      <select name="comp_accept" accept="Category:Races"></select>
+      <div class="choice example"></div>
+      <p class="to-be-modified"></p>
+    </div>
+    <div class="repeating">
+      <!--add repeating section in test.js-->
+    </div>
+    <div class="iframe"></div>
   </div>
-  <div class="selects">
-    <select class="mancer-select" name="comp_select"></select>
-  </div>
-  <div class="buttons">
-    <button type="action" name="act_button"></button>
-    <button type="action" name="act_startMancer"></button>
-    <button type="roll" name="roll_button"></button>
-    <button type="submit" value="slide2"></button>
-    <button type="back" value="slide1"></button>
-    <button type="cancel" value="foo"></button>
-    <button type="finish" value="test"></button>
-  </div>
-  <div class="mancer-specific">
-    <select name="comp_accept" accept="Category:Races"></select>
-    <div class="choice example"></div>
-    <p class="to-be-modified"></p>
-  </div>
-  <div class="repeating">
-    <!--add repeating section in test.js-->
-  </div>
-  <div class="iframe"></div>
 </charmancer>
 <charmancer class="sheet-charmancer-final"></charmancer>
 <script type="text/worker">
-  const mimic = null;function testMancer() {
+  const mimic = null;//--
+//-- Sheetworker constants
+//--
+function testSheet (){
+    let results = {};
+    let sheet = {
+        attrs: [
+            "span",
+            "hidden",
+            "checkbox",
+            "textInput",
+            "radioInput"
+        ],
+        repsecs: [
+            "type1",
+            "type2"
+        ],
+        buttons: [
+            "button",
+            "startMancer"
+        ]
+    }
+
+    sheet.repeating_attrs = (()=>{
+        let res = [];
+        for (let i in sheet.respecs) {
+            for (let j in sheet.attrs) {
+                res.push(`repeating_${respecs[i]}_${attrs[j]}`);
+            }
+        }
+        return res;
+    })();
+
+    //--
+    //-- Events
+    //--
+    let repeating_attr_listener = (()=>{
+        let res = "";
+        for (let i of sheet.repsecs) {
+            for (let j of sheet.attrs) {
+                res += " change:repeating_"+i+':'+j;
+            }
+        }
+        return res;
+    })();
+
+    let listener =
+        "change:" + sheet.attrs.join(" change:") +
+        repeating_attr_listener +
+        "remove:repeating_" + sheet.repsecs.join(" remove:repeating_") +
+        "sheet:opened" +
+        "clicked:" + sheet.buttons.join(" clicked:");
+
+    on(listener, (info)=>{
+        results.events = results.events || [];
+        results.events.push(info);
+    });
+
+    getAttrs(sheet.attrs.concat(sheet.repeating_attrs),(res)=>{
+        if (!results["getAttrs"]) results["getAttrs"] = [];
+        results["getAttrs"].push(res);
+    })
+
+    setAttrs((()=>{
+        let newvals = {};
+        for (let i in sheet.repsecs) {
+            let id = generateRowID();
+            for (let j in sheet.attrs) {
+                newvals[sheet.attrs[j]] = j;
+                newvals[`repeating_${sheet.repsecs[i]}_${sheet.attrs[j]}`] = `by sectionname: ${j}`;
+                newvals[`repeating_${sheet.repsecs[i]}_${id}_${sheet.attrs[j]}`] = `by id: ${j}`;
+            }
+        }
+        return newvals;
+    })(),(res)=>{
+        results.setAttrs = results.setAttrs || [];
+        results.setAttrs.push(res);
+    });
+
+    getSectionIDs(sheet.repsecs[0], (sectionIDs)=>{
+        results.getSectionIDs = results.getSectionIDs || [];
+        results.getSectionIDs.push(sectionIDs);
+        //get row specific attrs
+        getAttrs((()=>{
+            let _attrs = [];
+            for (let i in sheet.repsecs) {
+                for (let j in sheet.attrs) {
+                    for (let k in sectionIDs) {
+                        _attrs.push(`repeating_${sheet.repsecs[i]}_${sectionIDs[k]}_${sheet.attrs[j]}`);
+                    }
+                }
+            }
+            return _attrs;
+        })(),(res)=>{
+            results.getAttrs_repsecID = results.getAttrs_repsecID || [];
+            results.getAttrs_repsecID.push(res);
+
+            for (let i in sectionIDs) {
+                removeRepeatingRow(`repeating_${sheet.repsecs[0]}_${sectionIDs[i]}`);
+            }
+        })
+    });
+
+    results.getTranslationByKey = getTranslationByKey("name");
+    results.getTranslationLangauge = getTranslationLanguage();
+    
+    var default_attr = {};
+    default_attr["width"] = 70;
+    default_attr["height"] = 70;
+    default_attr["bar1_value"] = 10;
+    default_attr["bar1_max"] = 15;
+    setDefaultToken(default_attr);
+
+    console.log("RESULTS:",results);
+}
+
+on("sheet:opened", ()=>{
+    if (mimic) {
+        testSheet();
+        testMancer();
+    }
+});
+
+on("clicked:startMancer", ()=>{
+    if (!mimic) {
+        testMancer();
+    }
+})
+
+if (mimic) {
+    mimic.addRepeatingSections();
+    mimic.triggerEvent("sheet:opened");
+}function testMancer() {
     console.log("TESTING MANCER...");
     let sheet = {
         attrs: [
@@ -199,7 +335,7 @@
         startCharactermancer("slide2");
     });
 
-    on("page:slide1", (info)=>{results
+    on("page:slide1", (info)=>{
         let selectors = [
             "button[type=action][name*=act_]",
             "button[type=roll][name*=roll_]",
@@ -207,9 +343,15 @@
             "button[type=back]",
             "button[type=cancel]",
         ];
-        document.querySelectorAll(selectors.join()).forEach((node)=>{
-            node.dispatchEvent(new MouseEvent('click'));
-        });})
+        if (mimic) {
+            document.querySelectorAll(selectors.join()).forEach((node)=>{
+                node.dispatchEvent(new MouseEvent('click'));
+            });
+        }
+        else {
+            changeCharmancerPage("slide2");
+        }
+    });
 
     on("page:slide2", (info)=>{
         addRepeatingSection("repeating","type1","addedType",(res)=>{
@@ -267,7 +409,10 @@
                     
                     getCharmancerData();
                     deleteCharmancerData(["slide1"]);
-                    document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
+                    
+                    if(mimic) {
+                        document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
+                    }
                 });
             });
         });

@@ -31,7 +31,7 @@
 * [/] Finish Button
 * [/] Roll Button
 * [/] "required" attribute
-* [ ] "accepts" attribute
+* [/] "accepts" attribute
 
 # Charmancer Functions to test:
 * [/] startCharactermancer()

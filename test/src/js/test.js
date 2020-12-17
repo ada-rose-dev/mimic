@@ -115,9 +115,17 @@ function testSheet (){
 }
 
 on("sheet:opened", ()=>{
-    //testSheet();
-    testMancer();
+    if (mimic) {
+        testSheet();
+        testMancer();
+    }
 });
+
+on("clicked:startMancer", ()=>{
+    if (!mimic) {
+        testMancer();
+    }
+})
 
 if (mimic) {
     mimic.addRepeatingSections();
