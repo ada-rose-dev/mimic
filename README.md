@@ -41,14 +41,16 @@ Constantly uploading your sheets to the web server can be a tedious and unreliab
 * Emulation of Roll20's sheet workers API in a virtual DOM environment.
 * Full support for basic sheet editing functions.
 * Full support for compendium functions.
-* Full support for charactermancer functions (IN PROGRESS)
-* Full support for repeating section functions (IN PROGRESS)
+* Full support for charactermancer functions
+* Full support for repeating section functions
 * Full support for HTML manipulation with [jsdom](https://github.com/jsdom/jsdom)
 
 ## limitations
-__Importantly, mimic does *not* connect to the Roll20 servers and is *not* to be used for final testing. Only usee mimic for desktop-based debugging.__
+__Importantly, mimic does *not* connect to the Roll20 servers and is *not* to be used for final testing. Only use mimic for desktop-based debugging.__
 
 Additionally, scripts loaded into `mimic` are *not* guaranteed to run in the order they are loaded into your HTML. This is because mimic *removes* any scripts from the HTML before running. This is done to keep runtimes fast. We may introduce a simple `mimic.json` file in the future to offer environment settings, including script execution order.
+
+Additionally, mimic currently only supports loading *one* character sheet at a time.
 
 mimic does not and will never have built-in support for drag'n'drop functionality, roll templates, or virtual tabletop emulation. This program is for character sheets only.
 
@@ -58,9 +60,11 @@ mimic does not and will never have built-in support for drag'n'drop functionalit
 1. Run the following command: `npm install . -g`
 1. Run `mimic $YOUR_DIRECTORY`
 
-Additionally, you can specify which files to track by typing their names. By default, mimic will scrape the directory for you. By default, the order of exeuction of the scraped files is not guaranteed. If you need to run scripts in order, specify them in the required order on the command line.
+Additionally, you can specify which files to track by typing their names. By default, mimic will scrape the directory for you. The order of exeuction of the scraped files is not guaranteed. If you need to run scripts in order, specify them in the required order on the command line.
 
 mimic will read your `sheet.json` and scan your directory for HTML and translation files. Additionally, it will search for the relevant compendium cache.
+
+Note that mimic will remove all sheet worker javascript from your sheets. This is so you can include test suites from other files. If you intend to do this, be sure to __undefine mimic in your HTML file.__ Check out the included test sheet for further details.
 
 I recommend simultaneously running [pug](https://pugjs.org/api/getting-started.html) to generate HTML, [sass](https://sass-lang.com/) to generate CSS, and mimic to test JavaScript.
 
@@ -74,8 +78,7 @@ I recommend simultaneously running [pug](https://pugjs.org/api/getting-started.h
 ### the `mimic` object: testing, debugging, and DOM manipulation
 Testing with mimic is as easy as using the `mimic` object to call functions. No additional includes or definitions necessary.
 
-I recommend adding a `test.js` file to your workspace so you can run unit tests on your sheet. The `mimic` object has a number of in-built functions to
-facilitate quick and easy unit testing.
+I recommend adding a `test.js` file to your workspace so you can run unit tests on your sheet. The `mimic` object has a number of in-built functions to facilitate quick and easy unit testing.
 
 If you need more advanced control, no worries! You have direct access to `_` as well as `dom`, `document`, and `window` using the typical (jsdom) syntax.
 
@@ -98,21 +101,21 @@ event = {
 
 ...And here is an example of the API in action:
 ```js
-mimic.triggerEvent("sheet:opened");
-mimic.enqueueEvent({
-  eventname: "clicked:button",
-  mancer: false,
-  oattr: "some_class",
-  sourcetype: "player"
-});
-mimic.addRepeatingSections("inventory");
-mimic.updateEvents();
+if (mimic) {
+  mimic.triggerEvent("sheet:opened");
+  mimic.enqueueEvent({
+    eventname: "clicked:button",
+    mancer: false,
+    oattr: "some_class",
+    sourcetype: "player"
+  });
+  mimic.addRepeatingSections("inventory");
+  mimic.updateEvents();
+}
 ```
 
-Although mimic uses Node's `vm` environment to run sheet scripts, debugging with mimic is relatively straightforward. Simply place the keyword `debugger;` wherever you need a sheet script to break.
-
-#### API
-//TODO: FLESH THIS OUT
+### Debugging
+Although mimic uses Node's `vm` environment to run sheet scripts, debugging with mimic is relatively straightforward. I personally use VSCode to run tests on mimic. Because the `vm` environment cannot be scanned for text-editor's debugger symbols, you will need to place the keyword `debugger;` wherever you need a sheet script to break. Unfortunately, VSCode has a tendency to keep these symbols around in the VM even when you remove them from the code. If this happens, simply restart mimic and the problem will fix itself.
 
 
 ### compendium scraping
@@ -131,6 +134,11 @@ If you'd like, you can open `mimic` in your preferred editor and use its built-i
 
 ## contribution
 Feel free to contribute to this project! Development is active in the `dev` branch. And, if you come across any bugs, *please* submit an issue. 
+
+## Possible Future Features
+* mimic.json environment settings
+* improved compendium scraping
+* visual sheet testing GUI using electron
 
 ## license
 ```

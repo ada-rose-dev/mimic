@@ -68,8 +68,7 @@ debugger;
             }
         }
         else if (!target_dir) {
-            target_dir = "./";
-           // target_dir = process.argv[i].replace("./",cwd);
+           target_dir = process.argv[i].replace("./",process.cwd());
         }
         else {
             if (process.argv[i].search(".js") === 0) {
