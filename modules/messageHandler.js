@@ -155,9 +155,11 @@ function definePostMessage(self,comp) {
         })
     }
     function repsecToTree(repsec, tree = {}) {
-        tree[repsec.id] = {};
+        let element = repsec.element;
+        let key = repsec.element.getAttribute("data-repeating");
+        tree[key] = {};
         for (let i in repsec.repsecs) {
-            repsecToTree(repsec.repsecs[i],tree[repsec.id]);
+            repsecToTree(repsec.repsecs[i],tree[key]);
         }
         return tree;
     }
@@ -168,6 +170,22 @@ function definePostMessage(self,comp) {
         }
         return true;
     }
+    function updateMancer() {
+        if (mancer.active) {
+            //transfer repsec data to mancer page attrs
+            for (let i in mancer.repeatingSections) {
+                let repdata = mancer.repeatingSections[i];
+                for (let j in repdata.repsecs) {
+                    let repsec = repdata.repsecs[j];
+                    for (let attr in repsec.attrs) {
+                        mancer.pages[mancer.current_page].values[`repeating_${repdata.id}_${repsec.id}_${attr}`] = repsec.attrs[attr];
+                    }
+                }
+            }
+
+            window._charmancerData[window._activeCharacterId] = mancer.pages;
+        }
+    }
 
     const handler = {
 
@@ -175,14 +193,14 @@ function definePostMessage(self,comp) {
         setattrs: (message, request, triggerevents) => {
             let data = message.data;
             let prefix = mancer.active ? "comp_" : "attr_";
-            let attrCache = mancer.active? mancer.pages[mancer.current_page].data : attrs;
+            let attrCache = mancer.active? mancer.pages[mancer.current_page].values : attrs;
 
             if (mancer.active) {
                 request.type = "setCharmancerData";
                 request.data = mancer.pages;
                 request.callback = {id: message.id, data:message.data}
                 request.character = message.characterid;
-                window._charmancerData = mancer.pages;
+                //window._charmancerData = mancer.pages;
             }
     
             for (let dataProperty in data) {
@@ -347,7 +365,7 @@ function definePostMessage(self,comp) {
                 }
                 request.data = {};
                 for (let i in arr) {
-                    Object.assign(request.data,compendiumSearch(arr[i]));
+                    Object.assign(request.data,compendiumSearch(arr[i])[0]);
                 }
             }
             else
@@ -370,6 +388,7 @@ function definePostMessage(self,comp) {
         changecharmancerpage: (message, request, triggerevents) => {
             if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
 
+            //save repeating info
             let page = loadMancerPage(message.data);
             triggerevents.push({
                 sourceSection: message.sourceSection || '',
@@ -577,62 +596,93 @@ function definePostMessage(self,comp) {
         addrepeatingsection: (message, request, triggerevents) => {
             if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
             //add charactermancer repeating section
-            let target = message.target,
-            section = message.section,
-            name = message.name || message.section;
+            let target = message.target;
+            let section = message.section;
             request.data = {};
             request.type="attrreqfulfilled";
 
             let node = mancer.current_node.querySelector(`[class=sheet-${target}]`);
             let newRow = createRepeatingRow(mancer.repeatingSections,section,mancer,node);
-            console.log(`Added repeating row to mancer page "${mancer.current_page}" with type "${section}" and id "${newRow.id}"`);
-            request.data = newRow.id;
+            if (message.name) {
+                let el = newRow.element;
+                el.setAttribute("data-repeating", el.getAttribute("data-repeating").replace(message.section, message.name));
+            }
+            let data = newRow.element.getAttribute("data-repeating");
+            let page = mancer.pages[mancer.current_page];
+            page.repeating = page.repeating || [];
+            page.repeating.push(data);
+            request.data = data;
+            //console.log(`Added repeating row to mancer page "${mancer.current_page}" with type "${section}" and id "${newRow.id}"`);
             return {request: request, triggerevents: triggerevents};
         },
         clearrepeatingsections: (message, request, triggerevents) => {
             if (!checkMancer(message)) return {request: request, triggerevents: triggerevents};
+
+            let res = {};
+
             //clearRepeatingSections
-            if (message.target) {
-                if (typeof(message.target) === 'string') {message.target = [message.target];}
-                for (let i in message.target) {
-                    let currentTarget = message.target[i];
-                    mancer.current_node.querySelectorAll(`[class=sheet-${currentTarget}]`).forEach((node) => {
-                        node.querySelectorAll("[data-repeating]").forEach((row) => {
-                            let id = row.getAttribute("data-repeating").split("_")[1];
-                            let found = false;
-                            for (let j in repeatingSections) {
-                                for (let k in repeatingSections[j].repsecs) {
-                                    if (repeatingSections[j].repsecs[k].id == id) {
-                                        delete repeatingSections[j].repsecs[k];
-                                        found = true; break;
+            for (let page in mancer.pages) {
+                res[page] = {
+                    values: {},
+                    data: {},
+                    repeating: []
+                }
+                let current_node = mancer.pages[page].node;
+            
+                if (message.target) {
+                    if (typeof(message.target) === 'string') {message.target = [message.target];}
+                    for (let i in message.target) {
+                        let currentTarget = message.target[i];
+                        current_node.querySelectorAll(`[class=sheet-${currentTarget}]`).forEach((node) => {
+                            node.querySelectorAll("[data-repeating]").forEach((row) => {
+                                let id = row.getAttribute("data-repeating").split("_")[1];
+                                let found = false;
+
+                                for (let j in mancer.repeatingSections) {
+                                    let repdata = mancer.repeatingSections[j];
+                                    for (let k in repdata.repsecs) {
+                                        let repsec = repdata.repsecs[k];
+                                        if (repsec.id == id) {
+                                            res[page].values = repsec.attrs;
+                                            res[page].repeating = _.map(repeatingSections[j].repeating,(repsec)=>{
+                                                return repsec.node.getAttribute("data-repeating");
+                                            })
+                                            delete repeatingSections[j].repsecs[k];
+                                            found = true; break;
+                                        }
                                     }
+                                    if (found) {break;}
                                 }
-                                if (found) {break;}
-                            }
-                            node.removeChild(row);
+                                node.removeChild(row);
+                            })
                         })
-                    })
-                }
-            }
-            //clearRepeatingSectionsById
-            else if (message.repids) {
-                for (let i in message.repids) {
-                    let id = message.repids[i];
-                    let node;
-                    let found = false;
-                    for (let j in repeatingSections) {
-                        for (let k in repeatingSections[j].repsecs) {
-                            if (repeatingSections[j].repsecs[k].id == id) {
-                                node = repeatingSections[j].repsecs[k].element;
-                                delete repeatingSections[j].repsecs[k];
-                                found = true; break;
-                            }
-                        }
-                        if (found) {break;}
                     }
-                    node.parentElement.removeChild(node);
+                }
+                //clearRepeatingSectionsById
+                else if (message.repids) {
+                    for (let i in message.repids) {
+                        let id = message.repids[i];
+                        let node;
+                        let found = false;
+                        for (let j in repeatingSections) {
+                            for (let k in repeatingSections[j].repsecs) {
+                                if (repeatingSections[j].repsecs[k].id == id) {
+                                    node = repeatingSections[j].repsecs[k].element;
+                                    res[page].values = repeatingSections[j].repsecs[k].attrs;
+                                    res[page].repeating = _.map(repeatingSections[j].repeating,(repsec)=>{
+                                        return repsec.node.getAttribute("data-repeating");
+                                    })
+                                    delete repeatingSections[j].repsecs[k];
+                                    found = true; break;
+                                }
+                            }
+                            if (found) {break;}
+                        }
+                        node.parentElement.removeChild(node);
+                    }
                 }
             }
+            request.data = res;
             return {request: request, triggerevents: triggerevents};
         },
         getrepeatingsections: (message, request, triggerevents) => {
@@ -653,7 +703,7 @@ function definePostMessage(self,comp) {
                                     let found = repsec.element;
                                     if (found == child) {
                                         Object.assign(tree,repsecToTree(repsec));
-                                        list.push(repsec.id);
+                                        list.push(found.getAttribute("data-repeating"));
                                     }
                                 }
                             }
@@ -721,6 +771,7 @@ function definePostMessage(self,comp) {
                 }
                 else if (message.eventname == "cancel") {
                     message.mancer = "cancel";
+                    message.eventname = message.data;
                     mancer.active = false;
                 }
                 else if (message.eventname == "back") {
@@ -770,8 +821,10 @@ function definePostMessage(self,comp) {
         }
         
         try {
+            updateMancer();
+
             window.messageHandler({data: response.request});
-            window._charmancerData = mancer;
+            //window._charmancerData = mancer;
             for (let i in response.triggerevents) {
                 trigger(response.triggerevents[i]);
             }

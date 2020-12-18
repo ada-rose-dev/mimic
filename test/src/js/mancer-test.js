@@ -1,3 +1,5 @@
+
+const results = {};
 function testMancer() {
     console.log("TESTING MANCER...");
     let sheet = {
@@ -21,7 +23,6 @@ function testMancer() {
             "slide2"
         ]
     };
-    let results = {};
 
     on("mancerchange:checkbox mancerroll:button remove:repeating_type1 remove:repeating_type2",(info) => {
         results[info.sourceAttribute] = results[info.sourceAttribute] || [];
@@ -55,11 +56,14 @@ function testMancer() {
             results["addRepeatingSection"] = res;
             addRepeatingSection("repeating","type1",(res)=>{
                 results["addRepeatingSectionAgain"] = res;
+
                 getRepeatingSections("repeating",(res)=>{
                     results["getRepeatingSections"] = res;
                     let order = [res.list[0], res.list[1]];
                     setSectionOrder("repeating",order,(res)=>{
                         results["setSectionOrder"] = res;
+                        console.log("setSectionOrder=>",results);
+                        console.log(getCharmancerData());
                     })
                 });
 
@@ -76,6 +80,7 @@ function testMancer() {
                         show_source: true
                     },(res)=>{
                         results["setCharmancerOptions"] = res;
+                        console.log(results);
                     })
 
                     disableCharmancerOptions("mancer-select",["a"]);
@@ -98,14 +103,15 @@ function testMancer() {
                     }
                     setAttrs(newvals, (res)=>{
                         results["setAttrs"] = res;
+                        console.log(results);
                     });
 
                     clearRepeatingSectionById(res[0],(res)=>{results["clearRepeatingSectionByID"] = res;});
                     clearRepeatingSections("repeating",(res)=>{results["clearRepeatingSections"] = res;});
 
-                    
-                    getCharmancerData();
-                    deleteCharmancerData(["slide1"]);
+                    results["mancerData"] = getCharmancerData();
+                    //deleteCharmancerData(["slide1"]);
+                    console.log(results);
                     
                     if(mimic) {
                         document.querySelector("button[type='finish']").dispatchEvent(new MouseEvent("click"));
