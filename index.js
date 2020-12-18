@@ -25,6 +25,7 @@ let comp_name = "";
 let verbose = false;
 let cwd = "";
 
+debugger;
 //-- boot
 (boot = () => {
     //cull node call and directory
@@ -67,7 +68,8 @@ let cwd = "";
             }
         }
         else if (!target_dir) {
-            target_dir = process.argv[i].replace("./",cwd);
+            target_dir = "./";
+           // target_dir = process.argv[i].replace("./",cwd);
         }
         else {
             if (process.argv[i].search(".js") === 0) {
@@ -166,7 +168,7 @@ async function loadCompendium(name) {
     }
 }
 async function loadInternals() {
-    loadFiles("./modules/",[],true);
+    loadFiles(cwd+"/modules/",[],true);
 }
 async function loadFile(dirent, directory, internal) {
     let name = dirent.name || dirent;
@@ -205,7 +207,7 @@ async function loadFile(dirent, directory, internal) {
             try {
                 translations[name.substring(0,name.length-5)] = JSON.parse(json.toString());
             }
-            catch(e) {log("Error parsing translations.json:",e);}
+            catch(e) {log("Error parsing translations.json:",e,json.toString());}
             watched[name] = fullname;
         }
     }
@@ -219,7 +221,9 @@ async function loadFiles(directory, filenames = [], internal = false) {
             filenames = fs.readdirSync(directory, {withFileTypes:true});
             let names = [];
             filenames.forEach((filename)=>{names.push(filename.name)});
-            if (verbose) log("Scraped filenames from dir:",directory,names);
+            if (verbose) {
+                //log("Scraped filenames from dir:",directory,names);
+            }
         }
         catch(e) {
             log("ERROR: Directory not found: ",directory);

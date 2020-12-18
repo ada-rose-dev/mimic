@@ -20,6 +20,20 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Launch Starfinder",
+            "skipFiles": [
+                "<node_internals>/**",
+                "./node_modules/**"
+            ],
+            "program": "${workspaceFolder}\\index.js",
+            "args": [
+                "C:/dev/contract/roll20-private-sheets/Starfinder by Roll20",
+                "--watch"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Launch Program (watch)",
             "skipFiles": [
                 "<node_internals>/**"

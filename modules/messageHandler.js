@@ -183,7 +183,16 @@ function definePostMessage(self,comp) {
                 }
             }
 
+            //get page attributes
+            mancer.current_node.querySelectorAll("input[value], select[value]").forEach((node)=>{
+                let name = node.getAttribute("name").replace("comp_","");
+                let value = node.getAttribute("value");
+                mancer.pages[mancer.current_page].values[name] = value;
+            })
+
+            //send to roll20 handlers
             window._charmancerData[window._activeCharacterId] = mancer.pages;
+            
         }
     }
 
@@ -470,6 +479,12 @@ function definePostMessage(self,comp) {
                 if (node.className.includes("sheet-charmancer")) {
                     let name = node.className.match(/sheet-charmancer-([^\s]+)/)[1];
                     mancer.pages[name] = {data: {}, values: {}, node: node};
+                    
+                    node.querySelectorAll("input[name], select[name]").forEach((node)=>{
+                        let attr = node.getAttribute("name").replace("comp_","");
+                        let value = node.getAttribute("value");
+                        mancer.pages[name].values[attr] = value;
+                    })
                 }
                 else if (node.className.includes("repeating")) {
                     let name = node.className.match(/repeating-([^\s]+)/)[1];
